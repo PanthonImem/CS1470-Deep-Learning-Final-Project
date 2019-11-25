@@ -11,11 +11,20 @@ class overcook_env:
             self.x = starting_pos[0]
             self.y = starting_pos[1]
             self.holding = None
+            self.holding_list = ['Raw Salmon', 'Salmon Sashimi']
         def move(self, dir, mov):
             xdir = [0,+1,0,-1]
             ydir = [+1,0,-1,0]
             self.x = int(self.x + (mov+1) * 5 * xdir[dir])
             self.y = int(self.y + (mov+1) * 5 * ydir[dir])
+            if(self.x>800):
+                self.x = 800
+            if(self.y>600):
+                self.y = 600
+            if(self.x<0):
+                self.x = 0
+            if(self.y<0):
+                self.y = 0
         def info(self):
             print('Agent Info:')
             print('X, Y: ', self.x, self.y)
@@ -48,7 +57,8 @@ class overcook_env:
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
-        self.agent = Agent(0, (height/2, width/2))
+        self.agent = self.Agent(0, (self.height/2, self.width/2))
+        return self.get_curr_state()
     def update_ui(self):
         pass
     def step(self, action):
@@ -66,6 +76,7 @@ class overcook_env:
             #If object is dispenser, get ingredient
             if(obj.type == 'Dispenser'):
                 self.agent.holding = obj.get_item()
+                reward = 20
             #If object is serving counter, get reward based on correctness
             elif(obj.type == 'Serving Counter'):
                 if(self.agent.holding is not None):
@@ -81,6 +92,7 @@ class overcook_env:
                         self.agent.holding = 'Salmon Sashimi'
         self.cumulative_reward += reward
         return self.get_curr_state(), reward, done
+
     """
     Get internal game state. Use this to get initial game state
     """
@@ -99,6 +111,21 @@ class overcook_env:
                 mindist = dist
                 minobj = object
         return minobj, mindist
+
+    def get_dim_state(self):
+        return 2, (len(self.agent.holding_list) + 1)
+
+    def hold_to_int(self):
+        dict =  {name: i+1 for (i,name) in enumerate(self.agent.holding_list)}
+        dict[None] = 0
+        return dict
+    def int_to_hold(self):
+        dict =  {i+1: name for (i,name) in enumerate(self.agent.holding_list)}
+        dict[0] = None
+        return dict
+
+
+
 class stage_1(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
@@ -107,8 +134,8 @@ class stage_1(overcook_env):
         return
     def gen_stage(self):
         objectls = []
-        objectls.append(self.Object(0, (200,200), 'Dispenser'))
-        objectls.append(self.Object(1, (200,600), 'Serving Counter'))
+        objectls.append(self.Object(0, (200,380), 'Dispenser'))
+        objectls.append(self.Object(1, (200,420), 'Serving Counter'))
         return objectls
 class stage_2(overcook_env):
     def __init__(self):
