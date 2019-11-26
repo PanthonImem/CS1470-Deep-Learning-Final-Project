@@ -18,7 +18,7 @@ class DeepQ(tf.keras.Model):
 
 		self.hidden_size1 = 24
 		self.hidden_size2 = 24
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.002)
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 
 		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
 		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
@@ -92,7 +92,7 @@ class DeepQSolver:
 				Q_values = self.model(np.asarray([state]))
 				targetQ = Q_values.numpy()
 				if finished:
-					targetQ[0][action] = -rwd
+					targetQ[0][action] = -5
 				else:
 					targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
 				loss = tf.reduce_sum(tf.square(Q_values - targetQ))
@@ -111,25 +111,27 @@ def train(env, solver, epsilon=0.05):
 		gamma: double, discount
 
 	Returns:
-		total reward
+		total step
 	"""
 	state = env.reset()
 	finished = False
-	total_rwd = 0
+	total_step = 0
 	while not finished:
 		if np.random.rand(1) < epsilon:
 			action = env.action_space.sample()
 		else:
 			action = solver.best_action(state)
 		next_state, rwd, finished, _ = env.step(action)
-		total_rwd += rwd
+		total_step += 1
 		solver.add_memory((state, next_state, action, rwd, finished))
 		solver.experience_replay()
 		state = next_state
-	return total_rwd
+	return total_step
 
 
 def main():
+	import time
+	st = time.time()
 	env = gym.make("CartPole-v1")  # environment
 	state_size = env.observation_space.shape[0]
 	num_actions = env.action_space.n
@@ -138,8 +140,8 @@ def main():
 	epsilon = 1
 	for i in range(5000):
 		res = train(env, solver, epsilon)
-		print(f'Episode {i} epsilon {epsilon}: Reward = {res}')
-		epsilon = max(epsilon * 0.99, 0.01)
+		print(f'Episode {i} epsilon {epsilon} time {(time.time() - st)/60}: Reward = {res}')
+		epsilon = max(epsilon * 0.95, 0.01)
 
 
 if __name__ == '__main__':
