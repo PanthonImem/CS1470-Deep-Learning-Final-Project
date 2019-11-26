@@ -5,7 +5,7 @@ from itertools import product
 import random
 from env import overcook_env, stage_1
 from Action import Action, get_action_dict
-
+import matplotlib.pyplot as plt
 mov_to_int, int_to_mov = get_action_dict()
 
 
@@ -24,8 +24,6 @@ class SARSA(object):
     """
 
     def __init__(self, env):
-        
-        super(SARSA, self).__init__()
         
         # game environment
         self.env = env
@@ -51,6 +49,8 @@ class SARSA(object):
         # Parameter_space
         self.w = np.zeros([int(self.fourier_dim**self.state_dim_continuous), self.state_dim_discrete, self.action_dim])
 
+        self.x = []
+
     """
     Calculate fourier basis at a state
 
@@ -64,16 +64,23 @@ class SARSA(object):
         norm_state = np.clip((cont_state - self.bound[0,:])/((self.bound[1, :] - self.bound[0, :])), 0,1)
         return np.cos(np.math.pi * (self.wave_num@norm_state))
     
+    """
+    get state from environment data
+
+    return:
+        - state which consists of continuous state and discrete state
+    """
     def get_state(self):
         time , agent, objectls, order = self.env_data
         cont_state = np.array([agent.x, agent.y])
         disc_state = self.hold_to_int[agent.holding]
         return (cont_state, disc_state)
+    
     """
     Calculate Q function at a state and an action
 
     params:
-        - state - position in state space
+        - state - state which consists of continuous state and discrete state
         - action - an action or a list of action
     return:
         Q-function approximated by fourier basis
@@ -87,23 +94,22 @@ class SARSA(object):
     Calculate an policy for a state
 
     params:
-        - state - position in state space
+        - state - state which consists of continuous state and discrete state
         - is_test - a boolean
     return:
-        an action with maximum Q_value (random exploration with probability for training)
+        an integer representation action with maximum Q_value (random exploration with probability for training)
     """
     def policy(self, state , is_test = False):
         if (random.random() < 1. - self.epsilon) or is_test:
             action_int =  np.argmax(self.Q_func(state, np.arange(self.action_dim)))
         else:
             action_int =  np.random.choice(self.state_dim_discrete)
-        #print(action_int)
         return action_int
 
     """
     Update parameter according to gradient descend
     params:
-        - action - an action
+        - action_int - an integer representation of the action
         - next_state - state follow from action
         - reward - reward from such action
         - e - eligibility traces
@@ -116,8 +122,7 @@ class SARSA(object):
         next_action_int = self.policy(next_state)
         state = self.get_state()
         _, disc_state = state
-        delta = reward + self.gamma * self.Q_func(next_state, next_action_int)\
-             - self.Q_func(state, action_int)
+        delta = reward + self.gamma * self.Q_func(next_state, next_action_int) - self.Q_func(state, action_int)
         e = self.gamma * self.lambda_ * e
         
         e[:,disc_state, action_int] += self.basis(state)
@@ -147,6 +152,7 @@ class SARSA(object):
             action_int = self.policy(self.get_state())
             self.env_data, reward, done= self.env.step(int_to_mov[action_int])
             next_state = self.get_state()
+            self.x.append(next_state[0])
             e = self.update(action_int, next_state, reward,  e)
             reward_sum += reward
 
@@ -219,21 +225,15 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 10000  # 1000
+    num_episodes = 1000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
     """
     Create environment
     """
-    # gym.envs.register(
-    #     id="MountainCarLongerEpisodeLength-v0",
-    #     entry_point="gym.envs.classic_control:MountainCarEnv",
-    #     max_episode_steps=num_timesteps,  # MountainCar-v0 uses 200
-    #     reward_threshold=-110.0,
-    # )
-    # env = gym.make("MountainCarLongerEpisodeLength-v0")
     env = stage_1()
+    
     """
     Instantiate model
     """
@@ -252,6 +252,9 @@ if __name__ == '__main__':
         
         model.reset_state()
     print('Training Reward:{}'.format(reward))
+
+    
+
     
     """
     Save model for later use

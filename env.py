@@ -129,13 +129,13 @@ class overcook_env:
 class stage_1(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
-        self.agent = self.Agent(0, (200, 400))
+        self.agent = self.Agent(0, (300, 400))
         super().__init__(600, 800, 210, self.agent, self.objectls, 'Raw Salmon')
         return
     def gen_stage(self):
         objectls = []
-        objectls.append(self.Object(0, (200,380), 'Dispenser'))
-        objectls.append(self.Object(1, (200,420), 'Serving Counter'))
+        objectls.append(self.Object(0, (300,380), 'Dispenser'))
+        objectls.append(self.Object(1, (280,400), 'Serving Counter'))
         return objectls
 class stage_2(overcook_env):
     def __init__(self):

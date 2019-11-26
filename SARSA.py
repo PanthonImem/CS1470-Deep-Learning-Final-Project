@@ -1,3 +1,4 @@
+
 import tensorflow as tf
 import numpy as np
 import gym
@@ -21,7 +22,6 @@ class SARSA(object):
 
     def __init__(self, env):
         
-        super(SARSA, self).__init__()
         
         # game environment
         self.env = env
@@ -226,7 +226,7 @@ if __name__ == '__main__':
     """
     
     for i in range(num_episodes):
-        reward = model.train(num_timesteps)
+        reward = model.train(num_timesteps, render = False)
         print('train episode: {}/{} reward: {}'.format(i+1, num_episodes, reward), end = '\r')
         
         if ((i+1)%int(num_episodes/10)==0):
