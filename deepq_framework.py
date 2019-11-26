@@ -17,8 +17,8 @@ class DeepQ(tf.keras.Model):
 		self.num_actions = num_actions
 
 		self.hidden_size1 = 24
-		self.hidden_size2 = 8
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
+		self.hidden_size2 = 24
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.002)
 
 		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
 		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
@@ -92,7 +92,7 @@ class DeepQSolver:
 				Q_values = self.model(np.asarray([state]))
 				targetQ = Q_values.numpy()
 				if finished:
-					targetQ[0][action] = rwd
+					targetQ[0][action] = -rwd
 				else:
 					targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
 				loss = tf.reduce_sum(tf.square(Q_values - targetQ))
@@ -134,10 +134,12 @@ def main():
 	state_size = env.observation_space.shape[0]
 	num_actions = env.action_space.n
 
-	solver = DeepQSolver(state_size, num_actions, 200, 16)
+	solver = DeepQSolver(state_size, num_actions, 100000, 30)
+	epsilon = 1
 	for i in range(5000):
-		res = train(env, solver)
-		print(f'Episode {i}: Reward = {res}')
+		res = train(env, solver, epsilon)
+		print(f'Episode {i} epsilon {epsilon}: Reward = {res}')
+		epsilon = max(epsilon * 0.99, 0.01)
 
 
 if __name__ == '__main__':
