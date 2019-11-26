@@ -1,3 +1,4 @@
+import random
 import gym
 import numpy as np
 import tensorflow as tf
@@ -15,11 +16,13 @@ class DeepQ(tf.keras.Model):
 		self.state_size = state_size
 		self.num_actions = num_actions
 
-		self.hidden_size = 16
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.1)
+		self.hidden_size1 = 24
+		self.hidden_size2 = 8
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.01)
 
-		self.dense1 = tf.keras.layers.Dense(self.hidden_size, activation='relu')
-		self.dense2 = tf.keras.layers.Dense(self.num_actions)
+		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
+		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
+		self.dense3 = tf.keras.layers.Dense(self.num_actions)
 
 	@tf.function
 	def call(self, states):
@@ -33,10 +36,72 @@ class DeepQ(tf.keras.Model):
 		"""
 		out = self.dense1(states)
 		out = self.dense2(out)
+		out = self.dense3(out)
 		return out
 
 
-def train(env, model, epsilon=0.05, gamma=0.99):
+class DeepQSolver:
+	def __init__(self, state_size, num_actions, num_memory, num_replay, gamma=0.99):
+		""" provides API for the DQN model
+
+		Args:
+			state_size: int, size of a state
+			num_actions: int, number of actions
+			num_memory: int, size of the memory
+			num_replay: int, number of times for each replay
+			gamma: float, discount
+		"""
+		self.model = DeepQ(state_size, num_actions)
+		self.num_memory = num_memory
+		self.memory = []
+		self.num_replay = num_replay
+		self.gamma = gamma
+
+	def best_action(self, state):
+		""" gets the best action to perform at the current state
+
+		Args:
+			state: state
+
+		Returns:
+			the action in the state with the highest Q value
+		"""
+		Q_values = self.model(np.asarray([state]))
+		action = tf.argmax(Q_values, 1)[0].numpy()
+		return action
+
+	def add_memory(self, tuple):
+		""" add information to the memory
+
+		Args:
+			tuple: tuple, (state, next_state, action, rwd, finished)
+		"""
+		self.memory.append(tuple)
+		if len(self.memory) > self.num_memory:
+			self.memory = self.memory[1:]
+
+	def experience_replay(self):
+		"""
+		replays previous episodes
+		"""
+		if len(self.memory) < self.num_replay:
+			return
+		batch = random.sample(self.memory, self.num_replay)
+		for (state, next_state, action, rwd, finished) in batch:
+			with tf.GradientTape() as tape:
+				Q_values = self.model(np.asarray([state]))
+				targetQ = Q_values.numpy()
+				if finished:
+					targetQ[0][action] = rwd
+				else:
+					targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
+				loss = tf.reduce_sum(tf.square(Q_values - targetQ))
+
+			grads = tape.gradient(loss, self.model.trainable_variables)
+			self.model.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
+
+
+def train(env, solver, epsilon=0.05):
 	""" Train the model for one episode
 
 	Args:
@@ -52,23 +117,15 @@ def train(env, model, epsilon=0.05, gamma=0.99):
 	finished = False
 	total_rwd = 0
 	while not finished:
-		with tf.GradientTape() as tape:
-			Q_values = model(np.asarray([state]))
-			if np.random.rand(1) < epsilon:
-				action = env.action_space.sample()
-			else:
-				action = tf.argmax(Q_values, 1)[0].numpy()
-			state, rwd, finished, _ = env.step(action)
-			total_rwd += rwd
-			targetQ = Q_values.numpy()
-			if finished:
-				targetQ[0][action] = rwd
-			else:
-				targetQ[0][action] = rwd + gamma * tf.reduce_max(model(np.asarray([state]))).numpy()
-			loss = tf.reduce_sum(tf.square(Q_values - targetQ))
-		grads = tape.gradient(loss, model.trainable_variables)
-		model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
-		# print(action, Q_values, targetQ, model(np.asarray([old_state]))[0])
+		if np.random.rand(1) < epsilon:
+			action = env.action_space.sample()
+		else:
+			action = solver.best_action(state)
+		next_state, rwd, finished, _ = env.step(action)
+		total_rwd += rwd
+		solver.add_memory((state, next_state, action, rwd, finished))
+		solver.experience_replay()
+		state = next_state
 	return total_rwd
 
 
@@ -77,11 +134,10 @@ def main():
 	state_size = env.observation_space.shape[0]
 	num_actions = env.action_space.n
 
-	model = DeepQ(state_size, num_actions)
+	solver = DeepQSolver(state_size, num_actions, 200, 16)
 	for i in range(5000):
-		res = train(env, model)
-		if i % 50 == 0:
-			print(f'Episode {i}: Reward = {res}')
+		res = train(env, solver)
+		print(f'Episode {i}: Reward = {res}')
 
 
 if __name__ == '__main__':
