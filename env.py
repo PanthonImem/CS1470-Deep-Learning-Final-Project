@@ -2,7 +2,7 @@ from tkinter import *
 import time
 import random
 import numpy as np
-#import unit_env_test as test
+import unit_env_test as test
 class overcook_env:
     class Agent:
         def __init__(self, id, starting_pos):
@@ -16,7 +16,7 @@ class overcook_env:
             ydir = [-1,-0.707,0,+0.707,+1,+0.707,0,-0.707]
             new_x = int(self.x + 20 * xdir[dir])
             new_y = int(self.y + 20 * ydir[dir])
-            if(new_x>=0 and new_x< xlim and new_y>0 and new_y<y_lim):
+            if(new_x>=0 and new_x< xlim and new_y>0 and new_y<ylim):
                 self.x = new_x
                 self.y = new_y
         def info(self):
@@ -72,8 +72,9 @@ class overcook_env:
         obj, dist = self.get_closest_object()
         if(action == 8 and dist < 50):
             #If object is dispenser, get ingredient
-            if(obj.type == 'Dispenser'):
+            if(obj.type == 'Dispenser' and self.agent.holding == None):
                 self.agent.holding = obj.get_item()
+                reward = 20
             #If object is serving counter, get reward based on correctness
             elif(obj.type == 'Serving Counter'):
                 if(self.agent.holding is not None):
@@ -87,13 +88,23 @@ class overcook_env:
                 if(self.agent.holding is not None):
                     if(self.agent.holding == 'Raw Salmon'):
                         self.agent.holding = 'Salmon Sashimi'
+                        reward = 35
         self.cumulative_reward += reward
         return self.get_curr_state(), reward, done
     """
     Get internal game state. Use this to get initial game state
     """
     def get_curr_state(self):
-        return self.agent.y, self.agent.x, self.agent.holding
+        itemdict = {None:2, 'Raw Salmon':3, 'Salmon Sashimi':4}
+        retls = []
+        retls.append(self.agent.y)
+        retls.append(self.agent.x)
+
+        retls2 = []
+        for i in range(len(itemdict)):
+            retls2.append(0)
+        retls2[itemdict[self.agent.holding]] = 1
+        return (retls, retls2)
     """
     Helper function for determining the closest object.
     Returns the closest object and distance
@@ -131,6 +142,6 @@ class stage_2(overcook_env):
         objectls.append(self.Object(2, (200,400), 'Serving Counter'))
         return objectls
 if __name__ == '__main__':
-    #tester = test.unit_env_test()
-    #tester.test_stage_1()
-    #tester.test_stage_2()
+    tester = test.unit_env_test()
+    tester.test_stage_1()
+    tester.test_stage_2()
