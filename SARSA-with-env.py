@@ -3,7 +3,7 @@ import numpy as np
 # import gym
 from itertools import product
 import random
-from temp.env2 import overcook_env, stage_1
+from env import overcook_env, stage_1
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
 mov_to_int, int_to_mov = get_action_dict()
@@ -71,10 +71,8 @@ class SARSA(object):
         - state which consists of continuous state and discrete state
     """
     def get_state(self):
-        print(self.env_data)
-        time , grid, agent, order = self.env_data
-        print(agent)
-        cont_state = np.array(grid).flatten()
+        time , agent, objectls, order = self.env_data
+        cont_state = np.array([agent.x, agent.y])
         disc_state = self.hold_to_int[agent.holding]
         return (cont_state, disc_state)
     
@@ -227,7 +225,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 30000  # 1000
+    num_episodes = 1000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -268,7 +266,7 @@ if __name__ == '__main__':
     """
     for i in range(num_test_episodes):
         reward = model.test(num_timesteps, render =  False)
-        print('test episode: {:4d}/{:4d} reward: {:8d}'.format(i+1, num_test_episodes, reward), end = '\r')
+        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
         if ((i+1)%int(num_test_episodes/10)==0):
             print()
         model.reset_state()
