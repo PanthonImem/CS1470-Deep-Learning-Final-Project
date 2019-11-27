@@ -124,7 +124,7 @@ class overcook_env:
     Get internal game state. Use this to get initial game state
     """
     def get_curr_state(self):
-        return (self.time ,self.grid, self.order)
+        return (self.time ,self.grid,self.agent, self.order)
     """
     Helper function for determining the closest object.
     Returns the closest object and distance
