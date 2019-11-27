@@ -2,8 +2,8 @@ from tkinter import *
 import time
 import random
 import numpy as np
-import unit_env_test2 as test
-import Action2
+import temp.unit_env_test2 as test
+import temp.Action2
 import string
 
 """
