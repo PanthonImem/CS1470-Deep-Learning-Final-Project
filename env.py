@@ -104,7 +104,7 @@ class overcook_env:
         for i in range(len(itemdict)):
             retls2.append(0)
         retls2[itemdict[self.agent.holding]] = 1
-        return (retls, retl2)
+        return (retls, retls2)
     """
     Helper function for determining the closest object.
     Returns the closest object and distance
