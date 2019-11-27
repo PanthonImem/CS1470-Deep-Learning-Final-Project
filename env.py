@@ -101,7 +101,7 @@ class overcook_env:
         retls.append(self.agent.x)
         for i in range(len(itemdict)):
             retls.append(0)
-        retls[itemdict[self.agent.holding]]
+        retls[itemdict[self.agent.holding]] = 1
         return retls
     """
     Helper function for determining the closest object.
