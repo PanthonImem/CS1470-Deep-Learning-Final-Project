@@ -2,7 +2,7 @@ from tkinter import *
 import time
 import random
 import numpy as np
-#import unit_env_test as test
+import unit_env_test as test
 class overcook_env:
     class Agent:
         def __init__(self, id, starting_pos):
@@ -16,7 +16,7 @@ class overcook_env:
             ydir = [-1,-0.707,0,+0.707,+1,+0.707,0,-0.707]
             new_x = int(self.x + 20 * xdir[dir])
             new_y = int(self.y + 20 * ydir[dir])
-            if(new_x>=0 and new_x< xlim and new_y>0 and new_y<y_lim):
+            if(new_x>=0 and new_x< xlim and new_y>0 and new_y<ylim):
                 self.x = new_x
                 self.y = new_y
         def info(self):
@@ -63,6 +63,7 @@ class overcook_env:
         #update agent position
         if(action >=0 and action <= 7):
             self.agent.move(action,(self.height, self.width))
+        print(self.agent.y, self.agent.x)
         #update done
         done = False
         self.time = self.time+1
@@ -74,6 +75,7 @@ class overcook_env:
             #If object is dispenser, get ingredient
             if(obj.type == 'Dispenser'):
                 self.agent.holding = obj.get_item()
+                reward = 20
             #If object is serving counter, get reward based on correctness
             elif(obj.type == 'Serving Counter'):
                 if(self.agent.holding is not None):
@@ -131,6 +133,6 @@ class stage_2(overcook_env):
         objectls.append(self.Object(2, (200,400), 'Serving Counter'))
         return objectls
 if __name__ == '__main__':
-    #tester = test.unit_env_test()
-    #tester.test_stage_1()
+    tester = test.unit_env_test()
+    tester.test_stage_1()
     #tester.test_stage_2()
