@@ -5,12 +5,15 @@ import numpy as np
 import unit_env_test2 as test
 import Action2
 import string
+def showgrid(grid):
+    for row in range(len(grid)):
+        print(grid[row])
 class overcook_env:
     class Agent:
         def __init__(self, id, starting_pos):
             self.id = id
-            self.x = starting_pos[0]
-            self.y = starting_pos[1]
+            self.y = starting_pos[0]
+            self.x = starting_pos[1]
             self.holding = None
             self.holding_list = ['Raw Salmon', 'Salmon Sashimi']
         def move(self, dir, info):
@@ -19,17 +22,21 @@ class overcook_env:
             ydir = [-1,-1,0,+1,+1,+1,0,-1]
             new_x = self.x + xdir[dir]
             new_y = self.y + ydir[dir]
-            print('mov', self.x, self.y, max_x, max_y)
+            print('mov')
+            print(self.y, self.x, new_y, new_x)
             if((new_x>=0)
                 & (new_x< max_x)
                 & (new_y>=0)
                 & (new_y<max_y)
-                & (grid[new_y][new_x] == ' ')):
-                grid[self.y][self.x] = ' '
-                grid[new_y][new_x] = 'A'
-                self.x = new_x
-                self.y = new_y
-            print(grid)
+                ):
+                if((grid[new_y][new_x] == 0)):
+                    grid[new_y][new_x] = 1
+                    grid[self.y][self.x] = 0
+                    self.x = new_x
+                    self.y = new_y
+            else:
+                print('Move invalid')
+            showgrid(grid)
             return grid
         def info(self):
             print('Agent Info:')
@@ -39,8 +46,8 @@ class overcook_env:
     class Object:
         def __init__(self, id, pos, type):
             self.id = id
-            self.x = pos[0]
-            self.y = pos[1]
+            self.y = pos[0]
+            self.x = pos[1]
             self.type = type
         def get_item(self):
             if(self.type == 'Dispenser'):
@@ -64,19 +71,14 @@ class overcook_env:
         self.width = len(grid[0])
         obj_id = 0
         ag_id = 0
+        itemdict = {2:'Dispenser', 3:'Serving Counter', 4:'Cutting Board'}
         for row in range(self.height):
             for col in range(self.width):
-                if(grid[row][col]=='A'):
+                if(grid[row][col]== 1 ):
                     self.agent = self.Agent(ag_id, (row,col))
                     ag_id += 1
-                elif(grid[row][col]=='D'):
-                    objlist.append(self.Object(obj_id, (row,col), 'Dispenser'))
-                    obj_id += 1
-                elif(grid[row][col]=='S'):
-                    objlist.append(self.Object(obj_id, (row,col), 'Serving Counter'))
-                    obj_id += 1
-                elif(grid[row][col]=='C'):
-                    objlist.append(self.Object(obj_id, (row,col), 'Cutting Board'))
+                elif(grid[row][col] > 1):
+                    objlist.append(self.Object(obj_id, (row,col), itemdict[grid[row][col]]))
                     obj_id += 1
         self.objectls = objlist
 
@@ -153,21 +155,21 @@ class overcook_env:
 
 class stage_1(overcook_env):
     def __init__(self):
-        grid = [' A    ',
-                '     D',
-                '      ',
-                'S     ']
+        grid = [[0,1,0,0,0,0],
+                [0,0,0,0,0,2],
+                [0,0,0,0,0,0],
+                [3,0,0,0,0,0]]
         super().__init__(210, grid, 'Raw Salmon')
         return
 class stage_2(overcook_env):
     def __init__(self):
-        grid = [' C    D',
-                '     A ',
-                '       ',
-                '      S']
+        grid = [[0,4,0,0,0,2],
+                [0,0,0,0,1,0],
+                [0,0,0,0,0,0],
+                [0,0,0,0,0,3]]
         super().__init__(210, grid, 'Salmon Sashimi')
         return
 if __name__ == '__main__':
     tester = test.unit_env_test()
     tester.test_stage_1()
-    #tester.test_stage_2()
+    tester.test_stage_2()
