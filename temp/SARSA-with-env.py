@@ -3,8 +3,8 @@ import numpy as np
 # import gym
 from itertools import product
 import random
-from temp.env2 import overcook_env, stage_1
-from Action import Action, get_action_dict
+from env2 import overcook_env, stage_1
+from Action2 import Action, get_action_dict
 import matplotlib.pyplot as plt
 mov_to_int, int_to_mov = get_action_dict()
 
@@ -74,7 +74,7 @@ class SARSA(object):
         print(self.env_data)
         time , grid, agent, order = self.env_data
         print(agent)
-        cont_state = np.array(grid).flatten()
+        cont_state = np.array(agent.x, agent.y)
         disc_state = self.hold_to_int[agent.holding]
         return (cont_state, disc_state)
     
