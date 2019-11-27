@@ -3,28 +3,22 @@ import time
 import random
 import numpy as np
 import unit_env_test as test
-import Action
 class overcook_env:
     class Agent:
         def __init__(self, id, starting_pos):
             self.id = id
-            self.x = starting_pos[0]
-            self.y = starting_pos[1]
+            self.y = starting_pos[0]
+            self.x = starting_pos[1]
             self.holding = None
-            self.holding_list = ['Raw Salmon', 'Salmon Sashimi']
-        def move(self, dir, mov):
-            xdir = [0,+1,0,-1]
-            ydir = [+1,0,-1,0]
-            self.x = int(self.x + (mov+1) * 5 * xdir[dir])
-            self.y = int(self.y + (mov+1) * 5 * ydir[dir])
-            if(self.x>800):
-                self.x = 800
-            if(self.y>600):
-                self.y = 600
-            if(self.x<0):
-                self.x = 0
-            if(self.y<0):
-                self.y = 0
+        def move(self, dir, lim):
+            ylim, xlim = lim
+            xdir = [0,+0.707,+1,+0.707,0,-0.707,-1,-0.707]
+            ydir = [-1,-0.707,0,+0.707,+1,+0.707,0,-0.707]
+            new_x = int(self.x + 20 * xdir[dir])
+            new_y = int(self.y + 20 * ydir[dir])
+            if(new_x>=0 and new_x< xlim and new_y>0 and new_y<ylim):
+                self.x = new_x
+                self.y = new_y
         def info(self):
             print('Agent Info:')
             print('X, Y: ', self.x, self.y)
@@ -33,8 +27,8 @@ class overcook_env:
     class Object:
         def __init__(self, id, pos, type):
             self.id = id
-            self.x = pos[0]
-            self.y = pos[1]
+            self.y = pos[0]
+            self.x = pos[1]
             self.type = type
         def get_item(self):
             if(self.type == 'Dispenser'):
@@ -51,20 +45,24 @@ class overcook_env:
         self.objectlist = objectlist
         self.time_limit = time_limit #in milliseconds
         self.agent = agent
+        self.og_pos = (self.agent.y, self.agent.x)
         self.order = order
         self.time = 0
         self.cumulative_reward = 0
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
-        self.agent = self.Agent(0, (self.height/2, self.width/2))
+        self.agent = self.Agent(0, self.og_pos)
         return self.get_curr_state()
-    def update_ui(self):
-        pass
+    """
+    Action = 8 means interact
+    """
     def step(self, action):
+
         reward = -1
         #update agent position
-        self.agent.move(action.dir, action.mov)
+        if(action >=0 and action <= 7):
+            self.agent.move(action,(self.height, self.width))
         #update done
         done = False
         self.time = self.time+1
@@ -72,9 +70,9 @@ class overcook_env:
             done = True
         #interact with closest object
         obj, dist = self.get_closest_object()
-        if(action.interact == 1 and dist < 40):
+        if(action == 8 and dist < 50):
             #If object is dispenser, get ingredient
-            if(obj.type == 'Dispenser'):
+            if(obj.type == 'Dispenser' and self.agent.holding == None):
                 self.agent.holding = obj.get_item()
                 reward = 20
             #If object is serving counter, get reward based on correctness
@@ -90,14 +88,23 @@ class overcook_env:
                 if(self.agent.holding is not None):
                     if(self.agent.holding == 'Raw Salmon'):
                         self.agent.holding = 'Salmon Sashimi'
+                        reward = 35
         self.cumulative_reward += reward
         return self.get_curr_state(), reward, done
-
     """
     Get internal game state. Use this to get initial game state
     """
     def get_curr_state(self):
-        return (self.time ,self.agent, self.objectls, self.order)
+        itemdict = {None:2, 'Raw Salmon':3, 'Salmon Sashimi':4}
+        retls = []
+        retls.append(self.agent.y)
+        retls.append(self.agent.x)
+
+        retls2 = []
+        for i in range(len(itemdict)):
+            retls2.append(0)
+        retls2[itemdict[self.agent.holding]] = 1
+        return (retls, retls2)
     """
     Helper function for determining the closest object.
     Returns the closest object and distance
@@ -111,43 +118,28 @@ class overcook_env:
                 mindist = dist
                 minobj = object
         return minobj, mindist
-
-    def get_dim_state(self):
-        return 2, (len(self.agent.holding_list) + 1)
-
-    def hold_to_int(self):
-        dict =  {name: i+1 for (i,name) in enumerate(self.agent.holding_list)}
-        dict[None] = 0
-        return dict
-    def int_to_hold(self):
-        dict =  {i+1: name for (i,name) in enumerate(self.agent.holding_list)}
-        dict[0] = None
-        return dict
-
-
-
 class stage_1(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
-        self.agent = self.Agent(0, (300, 400))
+        self.agent = self.Agent(0, (200, 300))
         super().__init__(600, 800, 210, self.agent, self.objectls, 'Raw Salmon')
         return
     def gen_stage(self):
         objectls = []
-        objectls.append(self.Object(0, (300,380), 'Dispenser'))
-        objectls.append(self.Object(1, (280,400), 'Serving Counter'))
+        objectls.append(self.Object(0, (200,200), 'Dispenser'))
+        objectls.append(self.Object(1, (200,400), 'Serving Counter'))
         return objectls
 class stage_2(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
-        self.agent = self.Agent(0, (200, 400))
+        self.agent = self.Agent(0, (200, 300))
         super().__init__(600, 800, 210, self.agent, self.objectls, 'Salmon Sashimi')
         return
     def gen_stage(self):
         objectls = []
         objectls.append(self.Object(0, (200,200), 'Dispenser'))
-        objectls.append(self.Object(1, (200,400), 'Cutting Board'))
-        objectls.append(self.Object(2, (200,600), 'Serving Counter'))
+        objectls.append(self.Object(1, (220,300), 'Cutting Board'))
+        objectls.append(self.Object(2, (200,400), 'Serving Counter'))
         return objectls
 if __name__ == '__main__':
     tester = test.unit_env_test()
