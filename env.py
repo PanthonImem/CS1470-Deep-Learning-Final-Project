@@ -63,7 +63,6 @@ class overcook_env:
         #update agent position
         if(action >=0 and action <= 7):
             self.agent.move(action,(self.height, self.width))
-        print(self.agent.y, self.agent.x)
         #update done
         done = False
         self.time = self.time+1
@@ -73,7 +72,7 @@ class overcook_env:
         obj, dist = self.get_closest_object()
         if(action == 8 and dist < 50):
             #If object is dispenser, get ingredient
-            if(obj.type == 'Dispenser'):
+            if(obj.type == 'Dispenser' and self.agent.holding == None):
                 self.agent.holding = obj.get_item()
                 reward = 20
             #If object is serving counter, get reward based on correctness
@@ -89,6 +88,7 @@ class overcook_env:
                 if(self.agent.holding is not None):
                     if(self.agent.holding == 'Raw Salmon'):
                         self.agent.holding = 'Salmon Sashimi'
+                        reward = 35
         self.cumulative_reward += reward
         return self.get_curr_state(), reward, done
     """
@@ -135,4 +135,4 @@ class stage_2(overcook_env):
 if __name__ == '__main__':
     tester = test.unit_env_test()
     tester.test_stage_1()
-    #tester.test_stage_2()
+    tester.test_stage_2()
