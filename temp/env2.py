@@ -58,6 +58,7 @@ class overcook_env:
             print('Type: ', self.type)
     def __init__(self, time_limit, grid, order):
         self.grid = grid
+        self.og_grid = grid
         self.parse_grid(self.grid)
         self.time_limit = time_limit #in milliseconds
         self.order = order
@@ -69,7 +70,7 @@ class overcook_env:
         self.width = len(grid[0])
         obj_id = 0
         ag_id = 0
-        itemdict = {2:'Dispenser', 3:'Serving Counter', 4:'Cutting Board'}
+        itemdict = {2:'Dispenser', 3:'Serving Counter', 4:'Cutting Board', 5:'Counter'}
         for row in range(self.height):
             for col in range(self.width):
                 if(grid[row][col]== 1 ):
@@ -83,7 +84,7 @@ class overcook_env:
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
-        self.agent = self.Agent(0, (self.height/2, self.width/2))
+        self.parse_grid(self.og_grid)
         return self.get_curr_state()
     
     def update_ui(self):
@@ -126,6 +127,7 @@ class overcook_env:
     Get internal game state. Use this to get initial game state
     """
     def get_curr_state(self):
+        print(self.agent)
         return (self.time ,self.grid, self.agent, self.order)
     """
     Helper function for determining the closest object.
@@ -166,6 +168,15 @@ class stage_2(overcook_env):
         grid = [[0,4,0,0,0,2],
                 [0,0,0,0,1,0],
                 [0,0,0,0,0,0],
+                [0,0,0,0,0,3]]
+        super().__init__(210, grid, 'Salmon Sashimi')
+        return
+
+class stage_3(overcook_env):
+    def __init__(self):
+        grid = [[5,4,5,5,5,2],
+                [0,0,0,1,0,5],
+                [0,5,5,5,5,5],
                 [0,0,0,0,0,3]]
         super().__init__(210, grid, 'Salmon Sashimi')
         return
