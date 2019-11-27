@@ -52,7 +52,7 @@ class overcook_env:
                     self.y = new_y
             else:
                 print('Move invalid')
-            #showgrid(grid)
+            showgrid(grid)
             return grid
         def info(self):
             print('Agent Info:')
@@ -135,9 +135,9 @@ class overcook_env:
             done = True
         #interact with closest object
         obj, dist = self.get_closest_object()
-        if(action.interact == 1 and dist < 1.5):   #1.5>sqrt(2)
+        if(action.interact == 1 and dist < 2):   #1.5>sqrt(2)
             #If object is dispenser, get ingredient
-            if(obj.type == 'Dispenser'):
+            if(obj.type == 'Dispenser' and self.agent.holding == None):
                 self.agent.holding = obj.get_item()
                 reward = 20
             #If object is serving counter, get reward based on correctness
@@ -169,10 +169,11 @@ class overcook_env:
         mindist = 9999999
         minobj = None
         for object in self.objectls:
-            dist = np.sqrt((object.x-self.agent.x)**2+(object.y-self.agent.y)**2)
-            if(dist<mindist):
-                mindist = dist
-                minobj = object
+            if(object.type != 'Counter'):
+                dist = np.sqrt((object.x-self.agent.x)**2+(object.y-self.agent.y)**2)
+                if(dist<mindist):
+                    mindist = dist
+                    minobj = object
         return minobj, mindist
 
     def get_dim_state(self):
@@ -216,3 +217,4 @@ if __name__ == '__main__':
     tester = test.unit_env_test()
     tester.test_stage_1()
     tester.test_stage_2()
+    tester.test_stage_3()

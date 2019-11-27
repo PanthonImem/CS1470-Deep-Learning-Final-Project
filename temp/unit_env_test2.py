@@ -86,6 +86,7 @@ class unit_env_test:
         print('Order', order)
         rewardls = []
         #test2
+
         action = Action2.Action(2,1)
         obv, reward, done = env.step(action)
         rewardls.append(reward)
@@ -106,6 +107,22 @@ class unit_env_test:
         obv, reward, done = env.step(action)
         rewardls.append(reward)
 
+        action = Action2.Action(3,0)
+        obv, reward, done = env.step(action)
+        rewardls.append(reward)
+
+        action = Action2.Action(2,0)
+        obv, reward, done = env.step(action)
+        rewardls.append(reward)
+
+        action = Action2.Action(2,0)
+        obv, reward, done = env.step(action)
+        rewardls.append(reward)
+
+        action = Action2.Action(2,1)
+        obv, reward, done = env.step(action)
+        rewardls.append(reward)
+
         self.test_summary(env, rewardls)
         if(rewardls[-1] == 100):
-            print('Test 2 Pass!')
+            print('Test 3 Pass!')
