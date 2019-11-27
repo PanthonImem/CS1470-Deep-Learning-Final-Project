@@ -10,15 +10,22 @@ class overcook_env:
             self.y = starting_pos[0]
             self.x = starting_pos[1]
             self.holding = None
-        def move(self, dir, lim):
+        def move(self, dir, lim, objectls):
             ylim, xlim = lim
             xdir = [0,+0.707,+1,+0.707,0,-0.707,-1,-0.707]
             ydir = [-1,-0.707,0,+0.707,+1,+0.707,0,-0.707]
             new_x = int(self.x + 20 * xdir[dir])
             new_y = int(self.y + 20 * ydir[dir])
             if(new_x>=0 and new_x< xlim and new_y>0 and new_y<ylim):
-                self.x = new_x
-                self.y = new_y
+                if(not self.check_collision(new_y, new_x, objectls)):
+                    self.x = new_x
+                    self.y = new_y
+        def check_collision(self, posy, posx, objectls):
+            for object in objectls:
+                dist = np.sqrt((object.x-posx)**2+(object.y-posy)**2)
+                if(dist<30):
+                    return True
+            return False
         def info(self):
             print('Agent Info:')
             print('X, Y: ', self.x, self.y)
@@ -49,6 +56,7 @@ class overcook_env:
         self.order = order
         self.time = 0
         self.cumulative_reward = 0
+        self.num_action = 9
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
@@ -62,7 +70,9 @@ class overcook_env:
         reward = -1
         #update agent position
         if(action >=0 and action <= 7):
-            self.agent.move(action,(self.height, self.width))
+            self.agent.move(action,(self.height, self.width), self.objectls)
+            print(self.agent.y, self.agent.x)
+
         #update done
         done = False
         self.time = self.time+1
@@ -95,7 +105,7 @@ class overcook_env:
     Get internal game state. Use this to get initial game state
     """
     def get_curr_state(self):
-        itemdict = {None:2, 'Raw Salmon':3, 'Salmon Sashimi':4}
+        itemdict = {None:0, 'Raw Salmon':1, 'Salmon Sashimi':2}
         retls = []
         retls.append(self.agent.y)
         retls.append(self.agent.x)
@@ -138,7 +148,7 @@ class stage_2(overcook_env):
     def gen_stage(self):
         objectls = []
         objectls.append(self.Object(0, (200,200), 'Dispenser'))
-        objectls.append(self.Object(1, (220,300), 'Cutting Board'))
+        objectls.append(self.Object(1, (260,300), 'Cutting Board'))
         objectls.append(self.Object(2, (200,400), 'Serving Counter'))
         return objectls
 if __name__ == '__main__':
