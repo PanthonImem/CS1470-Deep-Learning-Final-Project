@@ -22,8 +22,6 @@ class overcook_env:
             ydir = [-1,-1,0,+1,+1,+1,0,-1]
             new_x = self.x + xdir[dir]
             new_y = self.y + ydir[dir]
-            print('mov')
-            print(self.y, self.x, new_y, new_x)
             if((new_x>=0)
                 & (new_x< max_x)
                 & (new_y>=0)

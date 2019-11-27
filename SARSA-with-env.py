@@ -225,7 +225,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 1000  # 1000
+    num_episodes = 30000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -266,7 +266,7 @@ if __name__ == '__main__':
     """
     for i in range(num_test_episodes):
         reward = model.test(num_timesteps, render =  False)
-        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
+        print('test episode: {:4d}/{:4d} reward: {:8d}'.format(i+1, num_test_episodes, reward), end = '\r')
         if ((i+1)%int(num_test_episodes/10)==0):
             print()
         model.reset_state()
