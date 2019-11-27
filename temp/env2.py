@@ -85,8 +85,10 @@ class overcook_env:
         self.cumulative_reward = 0
         self.agent = self.Agent(0, (self.height/2, self.width/2))
         return self.get_curr_state()
+    
     def update_ui(self):
         pass
+    
     def step(self, action):
         reward = -1
         #update agent position
@@ -124,7 +126,7 @@ class overcook_env:
     Get internal game state. Use this to get initial game state
     """
     def get_curr_state(self):
-        return (self.time ,self.grid,self.agent, self.order)
+        return (self.time ,self.grid, self.agent, self.order)
     """
     Helper function for determining the closest object.
     Returns the closest object and distance

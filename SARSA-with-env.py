@@ -71,8 +71,9 @@ class SARSA(object):
         - state which consists of continuous state and discrete state
     """
     def get_state(self):
-        time , agent, objectls, order = self.env_data
-        cont_state = np.array([agent.x, agent.y])
+        time , grid, agent, order = self.env_data
+        print(agent)
+        cont_state = np.array(grid).flatten()
         disc_state = self.hold_to_int[agent.holding]
         return (cont_state, disc_state)
     
