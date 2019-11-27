@@ -15,7 +15,7 @@ class unit_env_test:
         print('Run Unit Test 1')
         print('Agent run to Dispenser, grab a raw fish, run to counter and deliver')
         env = Env.stage_1()
-        time, grid, order = env.get_curr_state()
+        time, grid, agent, order = env.get_curr_state()
         rewardls = []
         #test1
         action = Action2.Action(3,0)
@@ -50,7 +50,7 @@ class unit_env_test:
         print('Agent run to Dispenser, grab a raw fish, run to cutting board,')
         print('cut fish, run to counter and deliver')
         env = Env.stage_2()
-        time, grid, order = env.get_curr_state()
+        time, grid, agent, order = env.get_curr_state()
         print('Order', order)
         rewardls = []
         #test2
