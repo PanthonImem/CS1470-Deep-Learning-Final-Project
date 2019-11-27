@@ -95,7 +95,14 @@ class overcook_env:
     Get internal game state. Use this to get initial game state
     """
     def get_curr_state(self):
-        return self.agent.y, self.agent.x, self.agent.holding
+        itemdict = {None:2, 'Raw Salmon':3, 'Salmon Sashimi':4}
+        retls = []
+        retls.append(self.agent.y)
+        retls.append(self.agent.x)
+        for i in range(len(itemdict)):
+            retls.append(0)
+        retls[itemdict[self.agent.holding]]
+        return retls
     """
     Helper function for determining the closest object.
     Returns the closest object and distance
