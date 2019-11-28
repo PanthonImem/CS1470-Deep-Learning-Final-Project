@@ -189,6 +189,8 @@ def animate_game(env, save = False):
         objs += ax.plot(object.x, object.y, 'o', markersize = 10, label = object.type)
 
     agent, = ax.plot([], [], 'o',lw=2, markersize = 10, label = 'agent')
+
+    T_text = ax.text(0.05, 1.01, ' ', transform=ax.transAxes, fontsize = 16, color = 'k')
     
 
     # initialization function: plot the background of each frame
@@ -198,16 +200,19 @@ def animate_game(env, save = False):
         for i, obj in  enumerate(objs):
             obj.set_data(env.objectlist[i].x,env.objectlist[i].y)
             obj.set_label(env.objectlist[i].type)
-        return agent, objs
+        T_text.set_text('')
+        return agent, objs, T_text
 
     # animation function.  This is called sequentially
-    def animate(i):
-        agent.set_data(env.history[i][0], env.history[i][1])
+    def animate(t):
+        agent.set_data(env.history[t][0], env.history[t][1])
         agent.set_label('agent')
         for i, obj in  enumerate(objs):
             obj.set_data(env.objectlist[i].x,env.objectlist[i].y)
             obj.set_label(env.objectlist[i].type)
-        return agent, objs
+        T_text.set_text('t = {}'.format(t))
+        
+        return agent, objs, T_text
 
     # call the animator.  blit=True means only re-draw the parts that have changed.
     anim = animation.FuncAnimation(fig, animate, init_func=init,
