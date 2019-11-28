@@ -90,7 +90,7 @@ class SARSA(object):
     return:
         an integer representation action with maximum Q_value (random exploration with probability for training)
     """
-    def policy(self, state , is_test = False):
+    def policy(self, state , is_test):
         if (random.random() < 1. - self.epsilon) or is_test:
             action_int =  np.argmax(self.Q_func(state, np.arange(self.action_dim)))
         else:
@@ -108,9 +108,9 @@ class SARSA(object):
         updated state
         updated e
     """
-    def update(self, action_int, next_state, reward,  e): 
+    def update(self, action_int, next_state, reward,  e, is_test = False): 
 
-        next_action_int = self.policy(next_state)
+        next_action_int = self.policy(next_state, is_test)
         _, disc_state = self.state
         idx = np.where(np.array(disc_state) == 1)[0][0]
         delta = reward + self.gamma * self.Q_func(next_state, next_action_int) - self.Q_func(self.state, action_int)
@@ -140,7 +140,7 @@ class SARSA(object):
                 self.env.render()
             
 
-            action_int = self.policy(self.state)
+            action_int = self.policy(self.state, is_test = False)
             next_state, reward, done= self.env.step(action_int)
             self.x.append(next_state[0])
             self.state, e = self.update(action_int, next_state, reward,  e)
@@ -169,8 +169,8 @@ class SARSA(object):
             if render:
                 self.env.render()
 
-            action_int = self.policy(self.get_state())
-            self.env_data, reward, done = self.env.step(action_int)
+            action_int = self.policy(self.state, is_test = True)
+            self.state, reward, done = self.env.step(action_int)
             reward_sum += reward
 
             if done:
@@ -189,7 +189,7 @@ class SARSA(object):
     Reset all state to the start of the game
     """
     def reset_state(self):
-        self.env_data = self.env.reset()
+        self.state = self.env.reset()
     
     """
     Save weight  to file
@@ -249,7 +249,8 @@ if __name__ == '__main__':
     """
     Save model for later use
     """
-    model.save('weight.npy')
+    # model.save('weight.npy')
+    # model.load('weight.npy')
 
     """
     Test model
