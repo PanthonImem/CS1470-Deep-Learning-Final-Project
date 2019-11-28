@@ -279,8 +279,8 @@ if __name__ == '__main__':
     model.reset_state()
     print('Training Reward:{}'.format(reward))
 
-    plt.plot(model.rewards)
-    plt.show()
+    # plt.plot(model.rewards)
+    # plt.show()
 
 
 
