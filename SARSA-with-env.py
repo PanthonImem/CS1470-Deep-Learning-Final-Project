@@ -77,8 +77,9 @@ class SARSA(object):
     """
     def Q_func(self, state, action_int):
         _, disc_state = state
+        idx = np.where(np.array(disc_state) == 1)[0][0]
         fourier_basis = self.basis(state)
-        return fourier_basis@self.w[:, disc_state ,action_int]
+        return fourier_basis@self.w[:, idx ,action_int]
 
     """
     Calculate an policy for a state
@@ -111,10 +112,11 @@ class SARSA(object):
 
         next_action_int = self.policy(next_state)
         _, disc_state = self.state
+        idx = np.where(np.array(disc_state) == 1)[0][0]
         delta = reward + self.gamma * self.Q_func(next_state, next_action_int) - self.Q_func(self.state, action_int)
         e = self.gamma * self.lambda_ * e
         
-        e[:,disc_state, action_int] += self.basis(self.state)
+        e[:,idx, action_int] += self.basis(self.state)
 
         self.w += self.alpha * delta * e
 
