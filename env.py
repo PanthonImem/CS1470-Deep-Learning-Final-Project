@@ -171,7 +171,7 @@ class CuttingBoard(GameObject):
 
 class Frame(GameObject):
     def __init__(self, id, width, height):
-       super().__init__(id, 0, 'Frame', 0)
+       super().__init__(id, (0,0), 'Frame', 0)
        self.width = width
        self.height = height
     
