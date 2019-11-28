@@ -18,13 +18,17 @@ class DeepQ(tf.keras.Model):
 		self.state_size = state_size
 		self.num_actions = num_actions
 		
-		self.hidden_size1 = 24
-		self.hidden_size2 = 24
+		self.hidden_size1 = 9
+		self.hidden_size2 = 9
+		self.hidden_size3 = 9
+		self.hidden_size4 = 9
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 		
 		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
 		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
-		self.dense3 = tf.keras.layers.Dense(self.num_actions)
+		self.dense3 = tf.keras.layers.Dense(self.hidden_size3, activation='relu')
+		self.dense4 = tf.keras.layers.Dense(self.hidden_size4, activation='relu')
+		self.dense5 = tf.keras.layers.Dense(self.num_actions)
 	
 	@tf.function
 	def call(self, states):
@@ -39,6 +43,8 @@ class DeepQ(tf.keras.Model):
 		out = self.dense1(states)
 		out = self.dense2(out)
 		out = self.dense3(out)
+		out = self.dense4(out)
+		out = self.dense5(out)
 		return out
 
 
@@ -94,7 +100,7 @@ class DeepQSolver:
 				Q_values = self.model(np.asarray([state]))
 				targetQ = Q_values.numpy()
 				targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
-				targetQ[0][action] = tf.clip_by_value(targetQ[0][action], clip_value_min=-10000, clip_value_max=10000)
+				targetQ[0][action] = tf.clip_by_value(targetQ[0][action], clip_value_min=-1000, clip_value_max=100000)
 				loss = tf.reduce_sum(tf.square(Q_values - targetQ))
 			# print(state[0] * 400.0, state[0] * 500.0, action, Q_values)
 			grads = tape.gradient(loss, self.model.trainable_variables)
@@ -145,7 +151,7 @@ def main():
 	for i in range(1000):
 		res = train(env, solver, epsilon)
 		print("Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
-		epsilon = max(epsilon * 0.95, 0.01)
+		epsilon = max(epsilon * 0.95, 0.05)
 
 
 if __name__ == '__main__':

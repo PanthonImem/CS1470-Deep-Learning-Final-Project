@@ -81,7 +81,7 @@ class overcook_env:
         if(action >=0 and action <= 7):
             success = self.agent.move(action,(self.height, self.width), self.objectls)
             if success == False:
-                reward = -10
+                reward = -5
 
         #update done
         done = False
@@ -94,21 +94,21 @@ class overcook_env:
             #If object is dispenser, get ingredient
             if(obj.type == 'Dispenser' and self.agent.holding == None):
                 self.agent.holding = obj.get_item()
-                reward = 20
+                reward = 200
             #If object is serving counter, get reward based on correctness
             elif(obj.type == 'Serving Counter'):
                 if(self.agent.holding is not None):
                     if(self.agent.holding == self.order):
-                        reward = 100
+                        reward = 1000
                     else:
-                        reward = -50
+                        reward = -10
                     self.agent.holding = None
             #If object is Cutting Board, turn raw salmon to salmon sashimi
             elif(obj.type == 'Cutting Board'):
                 if(self.agent.holding is not None):
                     if(self.agent.holding == 'Raw Salmon'):
                         self.agent.holding = 'Salmon Sashimi'
-                        reward = 35
+                        reward = 500
         self.cumulative_reward += reward
         #self.show_game_stage()
         self.history.append([self.agent.x, self.agent.y])
