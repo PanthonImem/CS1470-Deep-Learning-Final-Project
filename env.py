@@ -63,6 +63,7 @@ class overcook_env:
         self.time = 0
         self.cumulative_reward = 0
         self.num_action = 9
+        self.possible_holding = [None,'Raw Salmon','Salmon Sashimi']
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
@@ -139,8 +140,11 @@ class overcook_env:
     def show_game_stage(self):
         color_dict = {'Dispenser':'blue', 'Serving Counter':'brown', 'Cutting Board':'green'}
         plt.scatter(self.agent.x, self.agent.y, s= 100, c = 'red')
-        if(self.agent.holding != None):
+        if(self.agent.holding == 'Raw Salmon'):
             plt.scatter(self.agent.x, self.agent.y, s= 10, c = 'orange')
+        elif(self.agent.holding == 'Salmon Sashimi'):
+            plt.scatter(self.agent.x, self.agent.y, s= 10, c = 'orange')
+            plt.scatter(self.agent.x, self.agent.y, s= 3, c = 'magenta')
         for object in self.objectls:
             plt.scatter(object.x, object.y, s= 900, c = color_dict[object.type])
             plt.text(object.x, object.y, object.type , fontsize=9, horizontalalignment='center')
@@ -152,7 +156,7 @@ class stage_1(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
         self.agent = self.Agent(0, (200, 300))
-        super().__init__(600, 800, 210, self.agent, self.objectls, 'Raw Salmon')
+        super().__init__(400, 500, 210, self.agent, self.objectls, 'Raw Salmon')
         return
     def gen_stage(self):
         objectls = []
@@ -163,7 +167,7 @@ class stage_2(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
         self.agent = self.Agent(0, (200, 300))
-        super().__init__(600, 800, 210, self.agent, self.objectls, 'Salmon Sashimi')
+        super().__init__(400, 500, 210, self.agent, self.objectls, 'Salmon Sashimi')
         return
     def gen_stage(self):
         objectls = []
