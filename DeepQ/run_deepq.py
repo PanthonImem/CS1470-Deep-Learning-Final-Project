@@ -5,6 +5,7 @@ import tensorflow as tf
 
 from env import stage_1
 
+
 class DeepQ(tf.keras.Model):
 	def __init__(self, state_size, num_actions):
 		"""Deep NN for predicting Q values
@@ -16,15 +17,15 @@ class DeepQ(tf.keras.Model):
 		super(DeepQ, self).__init__()
 		self.state_size = state_size
 		self.num_actions = num_actions
-
+		
 		self.hidden_size1 = 24
 		self.hidden_size2 = 24
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.005)
-
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+		
 		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
 		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
 		self.dense3 = tf.keras.layers.Dense(self.num_actions)
-
+	
 	@tf.function
 	def call(self, states):
 		""" Compute Q values for the states in the batch
@@ -57,7 +58,7 @@ class DeepQSolver:
 		self.memory = []
 		self.num_replay = num_replay
 		self.gamma = gamma
-
+	
 	def best_action(self, state):
 		""" gets the best action to perform at the current state
 
@@ -70,7 +71,7 @@ class DeepQSolver:
 		Q_values = self.model(np.asarray([state]))
 		action = tf.argmax(Q_values, 1)[0].numpy()
 		return action
-
+	
 	def add_memory(self, tuple):
 		""" add information to the memory
 
@@ -80,7 +81,7 @@ class DeepQSolver:
 		self.memory.append(tuple)
 		if len(self.memory) > self.num_memory:
 			self.memory = self.memory[1:]
-
+	
 	def experience_replay(self):
 		"""
 		replays previous episodes
@@ -93,8 +94,9 @@ class DeepQSolver:
 				Q_values = self.model(np.asarray([state]))
 				targetQ = Q_values.numpy()
 				targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
+				targetQ[0][action] = tf.clip_by_value(targetQ[0][action], clip_value_min=-10000, clip_value_max=10000)
 				loss = tf.reduce_sum(tf.square(Q_values - targetQ))
-
+			# print(state[0] * 400.0, state[0] * 500.0, action, Q_values)
 			grads = tape.gradient(loss, self.model.trainable_variables)
 			self.model.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
 
@@ -112,6 +114,7 @@ def train(env, solver, epsilon=0.05):
 		total step
 	"""
 	(pos, holding) = env.reset()
+	pos = [pos[0] / env.width, pos[1] / env.height]
 	state = pos + holding
 	finished = False
 	total_rwd = 0
@@ -121,6 +124,7 @@ def train(env, solver, epsilon=0.05):
 		else:
 			action = solver.best_action(state)
 		(next_pos, next_holding), rwd, finished = env.step(action)
+		next_pos = [next_pos[0] / env.width, next_pos[1] / env.height]
 		next_state = next_pos + next_holding
 		total_rwd += rwd
 		solver.add_memory((state, next_state, action, rwd, finished))
@@ -136,13 +140,13 @@ def main():
 	state_size = 5
 	num_actions = 9
 	
-	solver = DeepQSolver(state_size, num_actions, 100, 5)
+	solver = DeepQSolver(state_size, num_actions, 100, 10)
 	epsilon = 1
 	for i in range(1000):
 		res = train(env, solver, epsilon)
 		print("Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
 		epsilon = max(epsilon * 0.95, 0.01)
-		
+
 
 if __name__ == '__main__':
 	main()
