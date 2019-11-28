@@ -18,13 +18,12 @@ class overcook_env:
 
             new_x = int(self.x + 20 * xdir[dir])
             new_y = int(self.y + 20 * ydir[dir])
-            success = True
+            success = False
             if(new_x>=0 and new_x< xlim and new_y>0 and new_y<ylim):
                 if(not self.check_collision(new_y, new_x, objectls)):
                     self.x = new_x
                     self.y = new_y
-            else:
-                success = False
+                    success = True
             return success
         def check_collision(self, posy, posx, objectls):
             for object in objectls:
