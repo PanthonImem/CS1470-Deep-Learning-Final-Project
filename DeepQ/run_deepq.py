@@ -3,7 +3,7 @@ import gym
 import numpy as np
 import tensorflow as tf
 
-from temp.env2 import stage_1, showgrid
+from env import stage_1
 
 class DeepQ(tf.keras.Model):
 	def __init__(self, state_size, num_actions):
@@ -19,7 +19,7 @@ class DeepQ(tf.keras.Model):
 
 		self.hidden_size1 = 24
 		self.hidden_size2 = 24
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.005)
 
 		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
 		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
@@ -92,10 +92,7 @@ class DeepQSolver:
 			with tf.GradientTape() as tape:
 				Q_values = self.model(np.asarray([state]))
 				targetQ = Q_values.numpy()
-				if finished:
-					targetQ[0][action] = -5
-				else:
-					targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
+				targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
 				loss = tf.reduce_sum(tf.square(Q_values - targetQ))
 
 			grads = tape.gradient(loss, self.model.trainable_variables)
@@ -114,27 +111,38 @@ def train(env, solver, epsilon=0.05):
 	Returns:
 		total step
 	"""
-	state = env.reset()
+	(pos, holding) = env.reset()
+	state = pos + holding
 	finished = False
-	total_step = 0
+	total_rwd = 0
 	while not finished:
 		if np.random.rand(1) < epsilon:
-			action = env.action_space.sample()
+			action = np.random.randint(9)
 		else:
 			action = solver.best_action(state)
-		next_state, rwd, finished, _ = env.step(action)
-		total_step += 1
+		(next_pos, next_holding), rwd, finished = env.step(action)
+		next_state = next_pos + next_holding
+		total_rwd += rwd
 		solver.add_memory((state, next_state, action, rwd, finished))
 		solver.experience_replay()
 		state = next_state
-	return total_step
+	return total_rwd
 
 
 def main():
-	stage = stage_1()
-	showgrid(stage.grid)
+	import time
+	st = time.time()
+	env = stage_1()
+	state_size = 5
+	num_actions = 9
 	
-
+	solver = DeepQSolver(state_size, num_actions, 100, 5)
+	epsilon = 1
+	for i in range(1000):
+		res = train(env, solver, epsilon)
+		print("Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
+		epsilon = max(epsilon * 0.95, 0.01)
+		
 
 if __name__ == '__main__':
 	main()
