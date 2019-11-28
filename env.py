@@ -73,7 +73,6 @@ class overcook_env:
         #update agent position
         if(action >=0 and action <= 7):
             self.agent.move(action,(self.height, self.width), self.objectls)
-            print(self.agent.y, self.agent.x)
 
         #update done
         done = False
