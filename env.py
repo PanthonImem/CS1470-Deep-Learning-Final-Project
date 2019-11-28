@@ -66,11 +66,13 @@ class overcook_env:
         self.possible_holding = [None,'Raw Salmon','Salmon Sashimi']
         self.history = []
         self.rewards = []
+        self.holdings = []
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
         self.agent = self.Agent(0, self.og_pos)
         self.history = []
+        self.holdings = []
         return self.get_curr_state()
     """
     Action = 8 means interact
@@ -114,6 +116,7 @@ class overcook_env:
         #self.show_game_stage()
         self.history.append([self.agent.x, self.agent.y])
         self.rewards.append(reward)
+        self.holdings.append(self.agent.holding)
         return self.get_curr_state(), reward, done
     """
     Get internal game state. Use this to get initial game state
@@ -192,6 +195,8 @@ def animate_game(env, save = False):
 
     agent, = ax.plot([], [], 'o',lw=2, markersize = 10, label = 'agent')
 
+    agentWith, = ax.plot([], [], 'o',lw=2, markersize = 10, label = 'agent(holding)')
+
     T_text = ax.text(0.05, 1.01, ' ', transform=ax.transAxes, fontsize = 16, color = 'k')
     
 
@@ -202,19 +207,31 @@ def animate_game(env, save = False):
         for i, obj in  enumerate(objs):
             obj.set_data(env.objectlist[i].x,env.objectlist[i].y)
             obj.set_label(env.objectlist[i].type)
+        agentWith.set_data([],[])
+        agentWith.set_label('agent(holding)')
         T_text.set_text('')
-        return agent, objs, T_text
+        return agent, agentWith, objs, T_text
 
     # animation function.  This is called sequentially
     def animate(t):
-        agent.set_data(env.history[t][0], env.history[t][1])
-        agent.set_label('agent')
+        
+        if env.holdings[t] == None:
+            agent.set_data(env.history[t][0], env.history[t][1])
+            agent.set_label('agent')
+            agentWith.set_data([],[])
+            agentWith.set_label('agent(holding)')
+        else:
+            agent.set_data([],[])
+            agent.set_label('agent')
+            agentWith.set_data(env.history[t][0], env.history[t][1])
+            agentWith.set_label('agent(holding)')
+        
         for i, obj in  enumerate(objs):
             obj.set_data(env.objectlist[i].x,env.objectlist[i].y)
             obj.set_label(env.objectlist[i].type)
         T_text.set_text('t = {} reward = {}'.format(t, env.rewards[t]))
-        
-        return agent, objs, T_text
+        plt.legend()
+        return agent, agentWith,  objs, T_text
 
     # call the animator.  blit=True means only re-draw the parts that have changed.
     anim = animation.FuncAnimation(fig, animate, init_func=init,
@@ -228,7 +245,7 @@ def animate_game(env, save = False):
     # if save:
     #     anim.save('cooling T{:.3f} B{:.3f}.mp4'.format(T, b), fps=30, extra_args=['-vcodec', 'libx264'], dpi = 300)
 
-    plt.legend()
+    
     plt.show()
 if __name__ == '__main__':
     tester = test.unit_env_test()
