@@ -4,6 +4,7 @@ import random
 import numpy as np
 import unit_env_test as test
 import matplotlib.pyplot as plt
+from matplotlib import animation
 class overcook_env:
     class Agent:
         def __init__(self, id, starting_pos):
@@ -60,10 +61,12 @@ class overcook_env:
         self.cumulative_reward = 0
         self.num_action = 9
         self.possible_holding = [None,'Raw Salmon','Salmon Sashimi']
+        self.history = []
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
         self.agent = self.Agent(0, self.og_pos)
+        self.history = []
         return self.get_curr_state()
     """
     Action = 8 means interact
@@ -71,10 +74,13 @@ class overcook_env:
     def step(self, action):
 
         reward = -1
+        old_x, old_y = self.agent.x, self.agent.y 
         #update agent position
         if(action >=0 and action <= 7):
             self.agent.move(action,(self.height, self.width), self.objectls)
-            print(self.agent.y, self.agent.x)
+
+        if self.agent.x == old_x and self.agent.y == old_y:
+            reward -= 19
 
         #update done
         done = False
@@ -104,6 +110,7 @@ class overcook_env:
                         reward = 35
         self.cumulative_reward += reward
         #self.show_game_stage()
+        self.history.append([self.agent.x, self.agent.y])
         return self.get_curr_state(), reward, done
     """
     Get internal game state. Use this to get initial game state
@@ -135,8 +142,11 @@ class overcook_env:
     def show_game_stage(self):
         color_dict = {'Dispenser':'blue', 'Serving Counter':'brown', 'Cutting Board':'green'}
         plt.scatter(self.agent.x, self.agent.y, s= 100, c = 'red')
-        if(self.agent.holding != None):
+        if(self.agent.holding == 'Raw Salmon'):
             plt.scatter(self.agent.x, self.agent.y, s= 10, c = 'orange')
+        elif(self.agent.holding == 'Salmon Sashimi'):
+            plt.scatter(self.agent.x, self.agent.y, s= 10, c = 'orange')
+            plt.scatter(self.agent.x, self.agent.y, s= 3, c = 'magenta')
         for object in self.objectls:
             plt.scatter(object.x, object.y, s= 900, c = color_dict[object.type])
         plt.xlim(0, self.width)
@@ -147,7 +157,7 @@ class stage_1(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
         self.agent = self.Agent(0, (200, 300))
-        super().__init__(600, 800, 210, self.agent, self.objectls, 'Raw Salmon')
+        super().__init__(400, 500, 210, self.agent, self.objectls, 'Raw Salmon')
         return
     def gen_stage(self):
         objectls = []
@@ -158,7 +168,7 @@ class stage_2(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
         self.agent = self.Agent(0, (200, 300))
-        super().__init__(600, 800, 210, self.agent, self.objectls, 'Salmon Sashimi')
+        super().__init__(400, 500, 210, self.agent, self.objectls, 'Salmon Sashimi')
         return
     def gen_stage(self):
         objectls = []
@@ -166,6 +176,51 @@ class stage_2(overcook_env):
         objectls.append(self.Object(1, (260,300), 'Cutting Board'))
         objectls.append(self.Object(2, (200,400), 'Serving Counter'))
         return objectls
+    
+def animate_game(env, save = False):
+
+    fig = plt.figure()
+    ax = plt.axes(xlim=(0, env.width), ylim=(0, env.height))
+
+    objs = []
+    for object in env.objectlist:
+        objs += ax.plot(object.x, object.y, 'o', markersize = 10, label = object.type)
+
+    agent, = ax.plot([], [], 'o',lw=2, markersize = 10, label = 'agent')
+    
+
+    # initialization function: plot the background of each frame
+    def init():
+        agent.set_data(0,0)
+        agent.set_label('agent')
+        for i, obj in  enumerate(objs):
+            obj.set_data(env.objectlist[i].x,env.objectlist[i].y)
+            obj.set_label(env.objectlist[i].type)
+        return agent, objs
+
+    # animation function.  This is called sequentially
+    def animate(i):
+        agent.set_data(env.history[i][0], env.history[i][1])
+        agent.set_label('agent')
+        for i, obj in  enumerate(objs):
+            obj.set_data(env.objectlist[i].x,env.objectlist[i].y)
+            obj.set_label(env.objectlist[i].type)
+        return agent, objs
+
+    # call the animator.  blit=True means only re-draw the parts that have changed.
+    anim = animation.FuncAnimation(fig, animate, init_func=init,
+                                frames=200, interval=50, blit=False)
+
+    # save the animation as an mp4.  This requires ffmpeg or mencoder to be
+    # installed.  The extra_args ensure that the x264 codec is used, so that
+    # the video can be embedded in html5.  You may need to adjust this for
+    # your system: for more information, see
+    # http://matplotlib.sourceforge.net/api/animation_api.html
+    # if save:
+    #     anim.save('cooling T{:.3f} B{:.3f}.mp4'.format(T, b), fps=30, extra_args=['-vcodec', 'libx264'], dpi = 300)
+
+    plt.legend()
+    plt.show()
 if __name__ == '__main__':
     tester = test.unit_env_test()
     tester.test_stage_1()
