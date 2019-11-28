@@ -1,4 +1,3 @@
-import tensorflow as tf
 import numpy as np
 # import gym
 from itertools import product
@@ -229,9 +228,14 @@ if __name__ == '__main__':
     model = SARSA(env)
 
     """
-    Train model
+    load model
     """
     
+    model.load('weight.npy')
+
+    """
+    Train model
+    """
 
     # for i in range(num_episodes):
     #     model.reset_state()
@@ -244,25 +248,15 @@ if __name__ == '__main__':
     #     if ((i+1)%int(num_episodes/10)==0):
     #         print()
 
-    # animate_game(env)
+    # # animate_game(env)
     # model.reset_state()
     # print('Training Reward:{}'.format(reward))
 
     # plt.plot(model.rewards)
     # plt.show()
     
+    
 
-    
-    """
-    Save model for later use
-    """
-    # model.save('weight.npy')
-    
-    """
-    load model
-    """
-    
-    model.load('weight.npy')
 
     """
     Test model
@@ -274,14 +268,13 @@ if __name__ == '__main__':
         if ((i+1)%int(num_test_episodes/10)==0):
             print()
 
-
-    animate_game(env)
-    model.reset_state()
     print('Training Reward:{}'.format(reward))
-
-    # plt.plot(model.rewards)
-    # plt.show()
-
+    animate_game(env)
+    
+    """
+    Save model for later use
+    """
+    model.save('weight.npy')
 
 
 
