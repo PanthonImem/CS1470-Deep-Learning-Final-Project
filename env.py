@@ -65,6 +65,7 @@ class overcook_env:
         self.num_action = 9
         self.possible_holding = [None,'Raw Salmon','Salmon Sashimi']
         self.history = []
+        self.rewards = []
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
@@ -112,6 +113,7 @@ class overcook_env:
         self.cumulative_reward += reward
         #self.show_game_stage()
         self.history.append([self.agent.x, self.agent.y])
+        self.rewards.append(reward)
         return self.get_curr_state(), reward, done
     """
     Get internal game state. Use this to get initial game state
@@ -210,7 +212,7 @@ def animate_game(env, save = False):
         for i, obj in  enumerate(objs):
             obj.set_data(env.objectlist[i].x,env.objectlist[i].y)
             obj.set_label(env.objectlist[i].type)
-        T_text.set_text('t = {}'.format(t))
+        T_text.set_text('t = {} reward = {}'.format(t, env.rewards[t]))
         
         return agent, objs, T_text
 
