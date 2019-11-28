@@ -28,8 +28,10 @@ class SARSA(object):
         # game environment
         self.env = env
 
-        self.action_dim = env.action_num
-        self.state_dim_continuous, self.state_dim_discrete = env.get_dim_state()
+        self.action_dim = env.num_action
+        self.state_dim_continuous = 2
+        self.state_dim_discrete = len(env.possible_holding)
+
         self.bound = np.vstack(([0,0], [env.height, env.width]))
 
         # hyper parameter
