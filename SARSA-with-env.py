@@ -214,7 +214,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 100  # 1000
+    num_episodes = 10000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -233,16 +233,47 @@ if __name__ == '__main__':
     """
     
 
-    for i in range(num_episodes):
-        model.reset_state()
-        reward = model.train(num_timesteps)
-        print('train episode: {}/{} reward: {}'.format(i+1, num_episodes, reward), end = '\r')
+    # for i in range(num_episodes):
+    #     model.reset_state()
+    #     reward = model.train(num_timesteps)
+    #     print('train episode: {}/{} reward: {}'.format(i+1, num_episodes, reward), end = '\r')
 
-        if ((i+1)%1 == 0):
-            model.rewards.append(reward)
+    #     if ((i+1)%1 == 0):
+    #         model.rewards.append(reward)
         
-        if ((i+1)%int(num_episodes/10)==0):
+    #     if ((i+1)%int(num_episodes/10)==0):
+    #         print()
+
+    # animate_game(env)
+    # model.reset_state()
+    # print('Training Reward:{}'.format(reward))
+
+    # plt.plot(model.rewards)
+    # plt.show()
+    
+
+    
+    """
+    Save model for later use
+    """
+    # model.save('weight.npy')
+    
+    """
+    load model
+    """
+    
+    model.load('weight.npy')
+
+    """
+    Test model
+    """
+    for i in range(num_test_episodes):
+        model.reset_state()
+        reward = model.test(num_timesteps, render =  False)
+        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
+        if ((i+1)%int(num_test_episodes/10)==0):
             print()
+
 
     animate_game(env)
     model.reset_state()
@@ -250,26 +281,6 @@ if __name__ == '__main__':
 
     plt.plot(model.rewards)
     plt.show()
-    
-
-    
-    """
-    Save model for later use
-    """
-    model.save('weight.npy')
-    # model.load('weight.npy')
-
-    """
-    Test model
-    """
-    for i in range(num_test_episodes):
-        reward = model.test(num_timesteps, render =  False)
-        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
-        if ((i+1)%int(num_test_episodes/10)==0):
-            print()
-        model.reset_state()
-
-
 
 
 
