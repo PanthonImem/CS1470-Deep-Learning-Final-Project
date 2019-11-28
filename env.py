@@ -3,6 +3,7 @@ import time
 import random
 import numpy as np
 import unit_env_test as test
+import matplotlib.pyplot as plt
 class overcook_env:
     class Agent:
         def __init__(self, id, starting_pos):
@@ -12,8 +13,9 @@ class overcook_env:
             self.holding = None
         def move(self, dir, lim, objectls):
             ylim, xlim = lim
-            xdir = [0,+0.707,+1,+0.707,0,-0.707,-1,-0.707]
             ydir = [-1,-0.707,0,+0.707,+1,+0.707,0,-0.707]
+            xdir = [0,+0.707,+1,+0.707,0,-0.707,-1,-0.707]
+
             new_x = int(self.x + 20 * xdir[dir])
             new_y = int(self.y + 20 * ydir[dir])
             if(new_x>=0 and new_x< xlim and new_y>0 and new_y<ylim):
@@ -100,6 +102,7 @@ class overcook_env:
                         self.agent.holding = 'Salmon Sashimi'
                         reward = 35
         self.cumulative_reward += reward
+        #self.show_game_stage()
         return self.get_curr_state(), reward, done
     """
     Get internal game state. Use this to get initial game state
@@ -128,6 +131,17 @@ class overcook_env:
                 mindist = dist
                 minobj = object
         return minobj, mindist
+    def show_game_stage(self):
+        color_dict = {'Dispenser':'blue', 'Serving Counter':'brown', 'Cutting Board':'green'}
+        plt.scatter(self.agent.x, self.agent.y, s= 100, c = 'red')
+        if(self.agent.holding != None):
+            plt.scatter(self.agent.x, self.agent.y, s= 10, c = 'orange')
+        for object in self.objectls:
+            plt.scatter(object.x, object.y, s= 900, c = color_dict[object.type])
+        plt.xlim(0, self.width)
+        plt.ylim(0, self.height)
+        plt.show()
+
 class stage_1(overcook_env):
     def __init__(self):
         self.objectls = self.gen_stage()
