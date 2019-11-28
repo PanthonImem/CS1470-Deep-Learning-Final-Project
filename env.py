@@ -59,6 +59,7 @@ class overcook_env:
         self.time = 0
         self.cumulative_reward = 0
         self.num_action = 9
+        self.possible_holding = [None,'Raw Salmon','Salmon Sashimi']
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
