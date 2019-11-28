@@ -212,7 +212,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 30000  # 1000
+    num_episodes = 10000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -230,7 +230,7 @@ if __name__ == '__main__':
     load model
     """
     
-    # model.load('weight.npy')
+    # model.load('weight2.npy')
 
     """
     Train model
@@ -247,7 +247,7 @@ if __name__ == '__main__':
         if ((i+1)%int(num_episodes/10)==0):
             print()
 
-    animate_game(env)
+    # animate_game(env)
     # model.reset_state()
     # print('Training Reward:{}'.format(reward))
 
@@ -268,12 +268,12 @@ if __name__ == '__main__':
     #         print()
 
     # print('Training Reward:{}'.format(reward))
-    # animate_game(env)
+    animate_game(env)
     
     # """
     # Save model for later use
     # """
-    model.save('weight2.npy')
+    model.save('weight.npy')
 
 
 

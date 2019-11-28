@@ -133,7 +133,9 @@ class Dispenser(GameObject):
         if dist < self.int_range:
             if agent.holding == None:
                 agent.holding = self.food
-            return 20
+                return 20
+            else:
+                return 0
         else:
             return 0
 
