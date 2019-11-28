@@ -3,10 +3,9 @@ import numpy as np
 # import gym
 from itertools import product
 import random
-from env import overcook_env, stage_1
+from env import overcook_env, stage_1, animate_game
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
-mov_to_int, int_to_mov = get_action_dict()
 
 
 class SARSA(object):
@@ -35,7 +34,7 @@ class SARSA(object):
         self.bound = np.vstack(([0,0], [env.height, env.width]))
 
         # hyper parameter
-        self.fourier_dim = 4
+        self.fourier_dim = 5
         self.epsilon = 1e-1
         self.gamma = 0.99
         self.lambda_ = 0.5
@@ -51,6 +50,7 @@ class SARSA(object):
         self.w = np.zeros([int(self.fourier_dim**self.state_dim_continuous), self.state_dim_discrete, self.action_dim])
 
         self.x = []
+        self.rewards = []
 
     """
     Calculate fourier basis at a state
@@ -149,7 +149,6 @@ class SARSA(object):
             if done:
                 break
         
-
         return reward_sum
 
 
@@ -215,7 +214,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 1000  # 1000
+    num_episodes = 100  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -233,23 +232,31 @@ if __name__ == '__main__':
     Train model
     """
     
+
     for i in range(num_episodes):
+        model.reset_state()
         reward = model.train(num_timesteps)
         print('train episode: {}/{} reward: {}'.format(i+1, num_episodes, reward), end = '\r')
+
+        if ((i+1)%1 == 0):
+            model.rewards.append(reward)
         
         if ((i+1)%int(num_episodes/10)==0):
             print()
-        
-        model.reset_state()
+
+    animate_game(env)
+    model.reset_state()
     print('Training Reward:{}'.format(reward))
 
+    plt.plot(model.rewards)
+    plt.show()
     
 
     
     """
     Save model for later use
     """
-    # model.save('weight.npy')
+    model.save('weight.npy')
     # model.load('weight.npy')
 
     """
