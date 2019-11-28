@@ -19,10 +19,13 @@ class overcook_env:
 
             new_x = int(self.x + 20 * xdir[dir])
             new_y = int(self.y + 20 * ydir[dir])
+            success = False
             if(new_x>=0 and new_x< xlim and new_y>0 and new_y<ylim):
                 if(not self.check_collision(new_y, new_x, objectls)):
                     self.x = new_x
                     self.y = new_y
+                    success = True
+            return success
         def check_collision(self, posy, posx, objectls):
             for object in objectls:
                 dist = np.sqrt((object.x-posx)**2+(object.y-posy)**2)
@@ -74,13 +77,11 @@ class overcook_env:
     def step(self, action):
 
         reward = -1
-        old_x, old_y = self.agent.x, self.agent.y 
         #update agent position
         if(action >=0 and action <= 7):
-            self.agent.move(action,(self.height, self.width), self.objectls)
-
-        if self.agent.x == old_x and self.agent.y == old_y:
-            reward -= 19
+            success = self.agent.move(action,(self.height, self.width), self.objectls)
+            if success == False:
+                reward = -10
 
         #update done
         done = False
@@ -149,6 +150,7 @@ class overcook_env:
             plt.scatter(self.agent.x, self.agent.y, s= 3, c = 'magenta')
         for object in self.objectls:
             plt.scatter(object.x, object.y, s= 900, c = color_dict[object.type])
+            plt.text(object.x, object.y, object.type , fontsize=9, horizontalalignment='center')
         plt.xlim(0, self.width)
         plt.ylim(0, self.height)
         plt.show()
