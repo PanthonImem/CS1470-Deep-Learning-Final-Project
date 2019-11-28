@@ -24,46 +24,19 @@ class Agent(object):
 
     params
      - dir - direction from 0-7 (0=South, Southeast, North, ... (counterclockwise))
-     - lim - upperbound of the frame in form of (y_max, x_max)
-     - objectls - list of object in the frame
-    return
-     - boolean indicate whether the move is successful
+     
+     returns
+     - new position of agent if it's not collide with anything
     """
-    def move(self, dir, lim, objectls):
-        ylim, xlim = lim
+    def move(self, dir):
             
-        ydir = [-1,-0.707,0,+0.707,+1,+0.707,0,-0.707]
-        xdir = [0,+0.707,+1,+0.707,0,-0.707,-1,-0.707]
+        ydir = [-1,-0.707,0,+0.707,+1,+0.707,0,-0.707, 0]
+        xdir = [0,+0.707,+1,+0.707,0,-0.707,-1,-0.707, 0]
 
         new_x = int(self.x + 20 * xdir[dir])
         new_y = int(self.y + 20 * ydir[dir])
-        success = False
-         # check boundary collision
-        if(new_x >= 0 and new_x < xlim and new_y >= 0 and new_y < ylim):
-            # check object collision
-            if(not self.collide_with_object(new_y, new_x, objectls)):
-                self.x = new_x
-                self.y = new_y
-                success = True
-        return success
-        
-    """
-    check collision of the agent with the object
-
-    params
-     - posx, posy - position of the thing (e.g. agent) you want to check for collision
-     - objectls - list of object in the frame
-        
-    return
-     - boolean whether the collision exist or not
-    """
-    def collide_with_object(self, posy, posx, objectls):
-        for object in objectls:
-            dist = np.sqrt((object.x-posx)**2+(object.y-posy)**2)
-            # TODO: Make distance arbritary 
-            if(dist < object.size):
-                return True
-        return False
+       
+        return new_x, new_y
     
     """"
     reset agent to a position
@@ -105,14 +78,38 @@ class GameObject(object):
 
     """
     Interaction of the item with the agent
-     - if this is called on Dispenser it will give out the ingredient
+    
+    params
+     - agent - game agent
+     - env - game environment
     
     return 
      - reward for that action
     """
-    # TODO: Make it possible to have different kind of Dispenser
     def interact(self, agent, env):
         return 0 
+    """
+    handle object collision
+    
+    params
+     - x, y - position to check collision
+     - 
+    """
+    def collision(self, x, y, agent):
+        dist = self.dist(x,y)
+        if(dist < self.size):
+            return -10
+        else:
+            agent.x = x
+            agent.y = y
+            return 0
+
+    """
+    Calculate distance to obejct
+    """
+    def dist(self, x, y):
+         return np.sqrt((self.x-x)**2+(self.y-y)**2)
+    
     """
     Get information about the object
     """
@@ -123,28 +120,41 @@ class GameObject(object):
         print('Y: ', self.y)
         print('Type: ', self.type)
 
+
+    
+
 class Dispenser(GameObject):
     def __init__(self, id, pos, size = 30, interact_range = 50, food = 'Raw Salmon'):
        super().__init__(id, pos, 'Dispenser', size)
        self.food = food
     
     def interact(self, agent, env):
-        if agent.holding == None:
-            agent.holding = self.food
-        return 20
+        dist = self.dist(agent.x, agent.y)
+        if dist < self.int_range:
+            if agent.holding == None:
+                agent.holding = self.food
+                return 20
+            else:
+                return 0
+        else:
+            return 0
 
 class ServingCounter(GameObject):
     def __init__(self, id, pos, size = 30, interact_range = 50):
        super().__init__(id, pos, 'Serving Counter', size)
     
     def interact(self, agent, env):
-        if agent.holding == env.order:
-            agent.holding = None
-            return 100
-        elif (agent.holding is not None):
-            agent.holding = None
-            return -50
-        else :
+        dist = self.dist(agent.x, agent.y)
+        if dist < self.int_range:
+            if agent.holding == env.order:
+                agent.holding = None
+                return 100
+            elif (agent.holding is not None):
+                agent.holding = None
+                return -50
+            else :
+                return 0
+        else:
             return 0
 
         
@@ -153,9 +163,32 @@ class CuttingBoard(GameObject):
        super().__init__(id, pos, 'Serving Counter', size)
     
     def interact(self, agent, env):
-        if agent.holding == 'Raw Salmon':
-            agent.holding = 'Salmon Sashimi'
-        return 35
+        dist = self.dist(agent.x, agent.y)
+        if dist < self.int_range:
+            if agent.holding == 'Raw Salmon':
+                agent.holding = 'Salmon Sashimi'
+            return 35
+        else:
+            return 0
+
+class Frame(GameObject):
+    def __init__(self, id, width, height):
+       super().__init__(id, (0,0), 'Frame', 0)
+       self.width = width
+       self.height = height
+    
+
+    def collision(self, x, y, agent):
+        if(x >= 0 and x < self.width and y >= 0 and y < self.height):
+            # check object collision
+            agent.x = x
+            agent.y = y
+            return 0
+        else:
+            return -10
+    
+    def dist(self, x, y):
+        return min(x, y, self.width - x, self.height -y)
 
 class Overcook(object):
     """
@@ -175,6 +208,7 @@ class Overcook(object):
         self.height = height
         self.width = width
         self.objectlist = objectlist
+        self.objectlist.append(Frame(id, width, height))
         self.time_limit = time_limit #in milliseconds
         self.agent = agent
         self.og_pos = (self.agent.y, self.agent.x)
@@ -196,10 +230,11 @@ class Overcook(object):
         self.history = []
         self.holdings = []
         return self.get_curr_state()
+    
+
+    
     """
     Go the the next state base on current state and action 
-
-    *** the reward is calculated here ***
     
     params
      - action - an integer from 0 - 7 (move) or 8 (interact) represent the action 
@@ -209,23 +244,22 @@ class Overcook(object):
      - boolean telling whether the game ended
     """
     def step(self, action):
-
+        # starting reward
         reward = -1
+        
         #update agent position
-        if(action >=0 and action <= 7):
-            success = self.agent.move(action,(self.height, self.width), self.objectlist)
-            if success == False:
-                reward = -10
+        new_x, new_y = self.agent.move(action)
+        
+        for object in self.objectlist:
+            reward += object.collision(new_x, new_y, self.agent)
 
         #update done
-        done = False
-        self.time = self.time+1
-        if(self.time >= self.time_limit):
-            done = True
+        done = self.time+1 >= self.time_limit 
+       
         #interact with closest object
-        obj, dist = self.get_closest_object()
-        if(action == 8 and dist < obj.int_range):
-            reward = obj.interact(self.agent, self)
+        obj, _ = self.get_closest_object()
+        if(action == 8):
+            reward += obj.interact(self.agent, self)
         
         self.cumulative_reward += reward
         #self.show_game_stage()
@@ -243,7 +277,7 @@ class Overcook(object):
         retls.append(self.agent.x)
 
         retls2 = []
-        for i in range(len(itemdict)):
+        for _ in range(len(itemdict)):
             retls2.append(0)
         retls2[itemdict[self.agent.holding]] = 1
         return (retls, retls2)
@@ -255,7 +289,7 @@ class Overcook(object):
         mindist = 9999999
         minobj = None
         for object in self.objectlist:
-            dist = np.sqrt((object.x-self.agent.x)**2+(object.y-self.agent.y)**2)
+            dist = object.dist(self.agent.x, self.agent.y)
             if(dist<mindist):
                 mindist = dist
                 minobj = object
@@ -271,7 +305,7 @@ class Overcook(object):
         elif(self.agent.holding == 'Salmon Sashimi'):
             plt.scatter(self.agent.x, self.agent.y, s= 10, c = 'orange')
             plt.scatter(self.agent.x, self.agent.y, s= 3, c = 'magenta')
-        for object in self.objectls:
+        for object in self.objectlist:
             plt.scatter(object.x, object.y, s= 900, c = color_dict[object.type])
             plt.text(object.x, object.y, object.type , fontsize=9, horizontalalignment='center')
         plt.xlim(0, self.width)

@@ -230,24 +230,24 @@ if __name__ == '__main__':
     load model
     """
     
-    model.load('weight.npy')
+    # model.load('weight2.npy')
 
     """
     Train model
     """
 
-    # for i in range(num_episodes):
-    #     model.reset_state()
-    #     reward = model.train(num_timesteps)
-    #     print('train episode: {}/{} reward: {}'.format(i+1, num_episodes, reward), end = '\r')
+    for i in range(num_episodes):
+        model.reset_state()
+        reward = model.train(num_timesteps)
+        print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
 
-    #     if ((i+1)%1 == 0):
-    #         model.rewards.append(reward)
+        if ((i+1)%1 == 0):
+            model.rewards.append(reward)
         
-    #     if ((i+1)%int(num_episodes/10)==0):
-    #         print()
+        if ((i+1)%int(num_episodes/10)==0):
+            print()
 
-    # # animate_game(env)
+    # animate_game(env)
     # model.reset_state()
     # print('Training Reward:{}'.format(reward))
 
@@ -257,22 +257,22 @@ if __name__ == '__main__':
     
 
 
-    """
-    Test model
-    """
-    for i in range(num_test_episodes):
-        model.reset_state()
-        reward = model.test(num_timesteps, render =  False)
-        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
-        if ((i+1)%int(num_test_episodes/10)==0):
-            print()
+    # """
+    # Test model
+    # """
+    # for i in range(num_test_episodes):
+    #     model.reset_state()
+    #     reward = model.test(num_timesteps, render =  False)
+    #     print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
+    #     if ((i+1)%int(num_test_episodes/10)==0):
+    #         print()
 
-    print('Training Reward:{}'.format(reward))
+    # print('Training Reward:{}'.format(reward))
     animate_game(env)
     
-    """
-    Save model for later use
-    """
+    # """
+    # Save model for later use
+    # """
     model.save('weight.npy')
 
 
