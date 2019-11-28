@@ -133,9 +133,7 @@ class Dispenser(GameObject):
         if dist < self.int_range:
             if agent.holding == None:
                 agent.holding = self.food
-                return 20
-            else:
-                return 0
+            return 20
         else:
             return 0
 
@@ -153,7 +151,7 @@ class ServingCounter(GameObject):
                 agent.holding = None
                 return -50
             else :
-                return 0
+                return -5
         else:
             return 0
 
@@ -207,6 +205,7 @@ class Overcook(object):
     def __init__(self, height, width, time_limit, agent, objectlist, order):
         self.height = height
         self.width = width
+        self.state_dim = 2
         self.objectlist = objectlist
         self.objectlist.append(Frame(id, width, height))
         self.time_limit = time_limit #in milliseconds
