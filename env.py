@@ -18,10 +18,14 @@ class overcook_env:
 
             new_x = int(self.x + 20 * xdir[dir])
             new_y = int(self.y + 20 * ydir[dir])
+            success = True
             if(new_x>=0 and new_x< xlim and new_y>0 and new_y<ylim):
                 if(not self.check_collision(new_y, new_x, objectls)):
                     self.x = new_x
                     self.y = new_y
+            else:
+                success = False
+            return success
         def check_collision(self, posy, posx, objectls):
             for object in objectls:
                 dist = np.sqrt((object.x-posx)**2+(object.y-posy)**2)
@@ -73,8 +77,9 @@ class overcook_env:
         reward = -1
         #update agent position
         if(action >=0 and action <= 7):
-            self.agent.move(action,(self.height, self.width), self.objectls)
-
+            success = self.agent.move(action,(self.height, self.width), self.objectls)
+            if success == False:
+                reward = -10
 
         #update done
         done = False
@@ -103,7 +108,7 @@ class overcook_env:
                         self.agent.holding = 'Salmon Sashimi'
                         reward = 35
         self.cumulative_reward += reward
-        #self.show_game_stage()
+        self.show_game_stage()
         return self.get_curr_state(), reward, done
     """
     Get internal game state. Use this to get initial game state
@@ -142,6 +147,7 @@ class overcook_env:
             plt.scatter(self.agent.x, self.agent.y, s= 3, c = 'magenta')
         for object in self.objectls:
             plt.scatter(object.x, object.y, s= 900, c = color_dict[object.type])
+            plt.text(object.x, object.y, object.type , fontsize=9, horizontalalignment='center')
         plt.xlim(0, self.width)
         plt.ylim(0, self.height)
         plt.show()
