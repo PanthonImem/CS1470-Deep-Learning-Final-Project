@@ -1,12 +1,9 @@
-import tensorflow as tf
 import numpy as np
-# import gym
 from itertools import product
 import random
-from env import overcook_env, stage_1
+from env import stage_1, animate_game
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
-mov_to_int, int_to_mov = get_action_dict()
 
 
 class SARSA(object):
@@ -28,12 +25,14 @@ class SARSA(object):
         # game environment
         self.env = env
 
-        self.action_dim = env.action_num
-        self.state_dim_continuous, self.state_dim_discrete = env.get_dim_state()
+        self.action_dim = env.num_action
+        self.state_dim_continuous = 2
+        self.state_dim_discrete = len(env.possible_holding)
+
         self.bound = np.vstack(([0,0], [env.height, env.width]))
 
         # hyper parameter
-        self.fourier_dim = 4
+        self.fourier_dim = 5
         self.epsilon = 1e-1
         self.gamma = 0.99
         self.lambda_ = 0.5
@@ -49,6 +48,7 @@ class SARSA(object):
         self.w = np.zeros([int(self.fourier_dim**self.state_dim_continuous), self.state_dim_discrete, self.action_dim])
 
         self.x = []
+        self.rewards = []
 
     """
     Calculate fourier basis at a state
@@ -75,8 +75,9 @@ class SARSA(object):
     """
     def Q_func(self, state, action_int):
         _, disc_state = state
+        idx = np.where(np.array(disc_state) == 1)[0][0]
         fourier_basis = self.basis(state)
-        return fourier_basis@self.w[:, disc_state ,action_int]
+        return fourier_basis@self.w[:, idx ,action_int]
 
     """
     Calculate an policy for a state
@@ -87,7 +88,7 @@ class SARSA(object):
     return:
         an integer representation action with maximum Q_value (random exploration with probability for training)
     """
-    def policy(self, state , is_test = False):
+    def policy(self, state , is_test):
         if (random.random() < 1. - self.epsilon) or is_test:
             action_int =  np.argmax(self.Q_func(state, np.arange(self.action_dim)))
         else:
@@ -105,14 +106,15 @@ class SARSA(object):
         updated state
         updated e
     """
-    def update(self, action_int, next_state, reward,  e): 
+    def update(self, action_int, next_state, reward,  e, is_test = False): 
 
-        next_action_int = self.policy(next_state)
+        next_action_int = self.policy(next_state, is_test)
         _, disc_state = self.state
+        idx = np.where(np.array(disc_state) == 1)[0][0]
         delta = reward + self.gamma * self.Q_func(next_state, next_action_int) - self.Q_func(self.state, action_int)
         e = self.gamma * self.lambda_ * e
         
-        e[:,disc_state, action_int] += self.basis(self.state)
+        e[:,idx, action_int] += self.basis(self.state)
 
         self.w += self.alpha * delta * e
 
@@ -136,7 +138,7 @@ class SARSA(object):
                 self.env.render()
             
 
-            action_int = self.policy(self.state)
+            action_int = self.policy(self.state, is_test = False)
             next_state, reward, done= self.env.step(action_int)
             self.x.append(next_state[0])
             self.state, e = self.update(action_int, next_state, reward,  e)
@@ -145,7 +147,6 @@ class SARSA(object):
             if done:
                 break
         
-
         return reward_sum
 
 
@@ -165,8 +166,8 @@ class SARSA(object):
             if render:
                 self.env.render()
 
-            action_int = self.policy(self.get_state())
-            self.env_data, reward, done = self.env.step(action_int)
+            action_int = self.policy(self.state, is_test = True)
+            self.state, reward, done = self.env.step(action_int)
             reward_sum += reward
 
             if done:
@@ -185,7 +186,7 @@ class SARSA(object):
     Reset all state to the start of the game
     """
     def reset_state(self):
-        self.env_data = self.env.reset()
+        self.state = self.env.reset()
     
     """
     Save weight  to file
@@ -211,7 +212,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 30000  # 1000
+    num_episodes = 10000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -226,39 +227,53 @@ if __name__ == '__main__':
     model = SARSA(env)
 
     """
+    load model
+    """
+    
+    model.load('weight.npy')
+
+    """
     Train model
     """
-    
-    for i in range(num_episodes):
-        reward = model.train(num_timesteps)
-        print('train episode: {}/{} reward: {}'.format(i+1, num_episodes, reward), end = '\r')
-        
-        if ((i+1)%int(num_episodes/10)==0):
-            print()
-        
-        model.reset_state()
-    print('Training Reward:{}'.format(reward))
 
+    # for i in range(num_episodes):
+    #     model.reset_state()
+    #     reward = model.train(num_timesteps)
+    #     print('train episode: {}/{} reward: {}'.format(i+1, num_episodes, reward), end = '\r')
+
+    #     if ((i+1)%1 == 0):
+    #         model.rewards.append(reward)
+        
+    #     if ((i+1)%int(num_episodes/10)==0):
+    #         print()
+
+    # # animate_game(env)
+    # model.reset_state()
+    # print('Training Reward:{}'.format(reward))
+
+    # plt.plot(model.rewards)
+    # plt.show()
+    
     
 
-    
-    """
-    Save model for later use
-    """
-    model.save('weight.npy')
 
     """
     Test model
     """
     for i in range(num_test_episodes):
+        model.reset_state()
         reward = model.test(num_timesteps, render =  False)
-        print('test episode: {:4d}/{:4d} reward: {:8d}'.format(i+1, num_test_episodes, reward), end = '\r')
+        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
         if ((i+1)%int(num_test_episodes/10)==0):
             print()
-        model.reset_state()
 
-
-
+    print('Training Reward:{}'.format(reward))
+    animate_game(env)
+    
+    """
+    Save model for later use
+    """
+    model.save('weight.npy')
 
 
 
