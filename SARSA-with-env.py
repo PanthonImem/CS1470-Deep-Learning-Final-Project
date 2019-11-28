@@ -1,8 +1,7 @@
 import numpy as np
-# import gym
 from itertools import product
 import random
-from env import overcook_env, stage_1, animate_game
+from env import stage_1, animate_game
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
 
