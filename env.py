@@ -49,6 +49,8 @@ class overcook_env:
         self.order = order
         self.time = 0
         self.cumulative_reward = 0
+        self.action_num = 9
+    
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0

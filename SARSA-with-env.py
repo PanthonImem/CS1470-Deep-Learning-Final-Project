@@ -28,10 +28,9 @@ class SARSA(object):
         # game environment
         self.env = env
 
-        self.action_dim = len(int_to_mov)
+        self.action_dim = env.action_num
         self.state_dim_continuous, self.state_dim_discrete = env.get_dim_state()
         self.bound = np.vstack(([0,0], [env.height, env.width]))
-        self.hold_to_int = env.hold_to_int()
 
         # hyper parameter
         self.fourier_dim = 4
@@ -41,7 +40,7 @@ class SARSA(object):
         self.alpha = 5e-4
         
         # game state
-        self.env_data = self.env.reset()
+        self.state = self.env.reset()
 
         # get all fourier wave number  (num_of_wave_number, dim_of_wave_number)
         self.wave_num = np.array(list(product(*[range(self.fourier_dim)]*self.state_dim_continuous)))   
@@ -64,17 +63,6 @@ class SARSA(object):
         norm_state = np.clip((cont_state - self.bound[0,:])/((self.bound[1, :] - self.bound[0, :])), 0,1)
         return np.cos(np.math.pi * (self.wave_num@norm_state))
     
-    """
-    get state from environment data
-
-    return:
-        - state which consists of continuous state and discrete state
-    """
-    def get_state(self):
-        time , agent, objectls, order = self.env_data
-        cont_state = np.array([agent.x, agent.y])
-        disc_state = self.hold_to_int[agent.holding]
-        return (cont_state, disc_state)
     
     """
     Calculate Q function at a state and an action
@@ -120,16 +108,15 @@ class SARSA(object):
     def update(self, action_int, next_state, reward,  e): 
 
         next_action_int = self.policy(next_state)
-        state = self.get_state()
-        _, disc_state = state
-        delta = reward + self.gamma * self.Q_func(next_state, next_action_int) - self.Q_func(state, action_int)
+        _, disc_state = self.state
+        delta = reward + self.gamma * self.Q_func(next_state, next_action_int) - self.Q_func(self.state, action_int)
         e = self.gamma * self.lambda_ * e
         
-        e[:,disc_state, action_int] += self.basis(state)
+        e[:,disc_state, action_int] += self.basis(self.state)
 
         self.w += self.alpha * delta * e
 
-        return e
+        return next_state, e
 
     """
     Train the model for 1 game
@@ -149,11 +136,10 @@ class SARSA(object):
                 self.env.render()
             
 
-            action_int = self.policy(self.get_state())
-            self.env_data, reward, done= self.env.step(int_to_mov[action_int])
-            next_state = self.get_state()
+            action_int = self.policy(self.state)
+            next_state, reward, done= self.env.step(action_int)
             self.x.append(next_state[0])
-            e = self.update(action_int, next_state, reward,  e)
+            self.state, e = self.update(action_int, next_state, reward,  e)
             reward_sum += reward
 
             if done:
@@ -180,7 +166,7 @@ class SARSA(object):
                 self.env.render()
 
             action_int = self.policy(self.get_state())
-            self.env_data, reward, done = self.env.step(int_to_mov[action_int])
+            self.env_data, reward, done = self.env.step(action_int)
             reward_sum += reward
 
             if done:
