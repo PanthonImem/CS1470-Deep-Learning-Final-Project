@@ -253,7 +253,10 @@ class Overcook(object):
             reward += object.collision(new_x, new_y, self.agent)
 
         #update done
-        done = self.time+1 >= self.time_limit 
+        done = False
+        self.time = self.time + 1
+        if (self.time >= self.time_limit):
+            done = True
        
         #interact with closest object
         obj, _ = self.get_closest_object()
