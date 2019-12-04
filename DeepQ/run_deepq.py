@@ -5,25 +5,61 @@ import tensorflow as tf
 
 from env import stage_1
 
-class DeepQ(tf.keras.Model):
-	def __init__(self, state_size, num_actions):
+class SARSADeepQ(tf.keras.Model):
+	def __init__(self, env):
 		"""Deep NN for predicting Q values
 
 		Args:
 			state_size: int, size of states
 			num_action: int, number of actions
 		"""
-		super(DeepQ, self).__init__()
-		self.state_size = state_size
-		self.num_actions = num_actions
+		super(SARSADeepQ, self).__init__()
+		self.env = env
 
-		self.hidden_size1 = 24
-		self.hidden_size2 = 24
+		self.action_dim = env.num_action
+		self.state_dim_continuous = env.state_dim
+		self.state_dim_discrete = len(env.possible_holding)
+
+		self.fourier_dim = 4
+
+		# Hyperparameter and layer define here
+
+		self.basis = np.pi * np.indices([self.fourier_dim] * self.state_dim_continuous)
+
+		self.b = tf.Variable(tf.random.truncate_normal([self.num_actions], mean = 0.0, stddev = 0.02))
+
+		self.lifting_disc = tf.constant(np.identity(self.state_dim_discrete))
+
+		# potentially use lifting dimension as another hyper parameter
+		self.w = tf.Variable(tf.random.truncate_normal([self.lifting_disc, self.fourier_dim * self.fourier_dim ,self.num_actions], mean = 0.0, stddev = 0.02))
+
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.005)
 
-		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
-		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
-		self.dense3 = tf.keras.layers.Dense(self.num_actions)
+		self.layers = []
+
+		# continuous_state -> basis, discrete_state -> lifting vector
+		# cont: [state_dim_cont] -> [fourier_dim, fourier_dim]
+		# disc: [state_dim_disc] -> [state_dim_disc]
+		self.layers.append(lambda inputs: (tf.tensordot(inputs[0], self.basis, 1), tf.matmul(inputs[1], self.lifting_disc)))
+
+		# Flatten basis into 1D
+		# cont: [fourier_dim, fourier_dim] -> [1, fourier_dim * fourier_dim]
+		self.layers.append(lambda inputs: (tf.reshape(inputs[0], [-1, self.fourier_dim * self.fourier_dim]), inputs[1]))
+		
+		# add bias 
+		# cont: [1, fourier_dim * fourier_dim] -> [1, fourier_dim * fourier_dim] 
+		self.layers.append(lambda inputs: (inputs[0] + self.b, inputs[1]))
+		
+		# activate basis with cos function and create dense matrix depend on discrete_state
+		# cont: [1, fourier_dim * fourier_dim] -> [1, fourier_dim * fourier_dim] 
+		# disc: [state_dim_disc] -> [fourier_dim * fourier_dim, num_action]
+		self.layers.append(lambda inputs: (tf.math.cos(inputs[0]), inputs[1]))
+		
+	
+		self.layers.append(lambda inputs: (inputs[0], inputs[1]))
+		
+		
+
 
 	@tf.function
 	def call(self, states):
