@@ -136,6 +136,15 @@ class Dispenser(GameObject):
             return 20
         else:
             return 0
+        
+    def collision(self, x, y, agent):
+        dist = self.dist(x,y)
+        if(dist < self.size):
+            return 0
+        else:
+            agent.x = x
+            agent.y = y
+            return 0
 
 class ServingCounter(GameObject):
     def __init__(self, id, pos, size = 30, interact_range = 50):
@@ -153,6 +162,15 @@ class ServingCounter(GameObject):
             else :
                 return -5
         else:
+            return 0
+        
+    def collision(self, x, y, agent):
+        dist = self.dist(x,y)
+        if(dist < self.size):
+            return 0
+        else:
+            agent.x = x
+            agent.y = y
             return 0
 
         
