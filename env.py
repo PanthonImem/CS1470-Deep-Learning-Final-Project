@@ -93,16 +93,18 @@ class GameObject(object):
     
     params
      - x, y - position to check collision
-     - 
+
+    returns
+     - reward
+     - new_pos depending on whether the update successful
     """
     def collision(self, x, y, agent):
         dist = self.dist(x,y)
         if(dist < self.size):
-            return -10
+            return -10, agent.x, agent.y
         else:
-            agent.x = x
-            agent.y = y
-            return 0
+
+            return 0, x, y
 
     """
     Calculate distance to obejct
@@ -136,6 +138,15 @@ class Dispenser(GameObject):
             return 20
         else:
             return 0
+        
+    def collision(self, x, y, agent):
+        dist = self.dist(x,y)
+        if(dist < self.size):
+            return 0, agent.x, agent.y
+        else:
+            agent.x = x
+            agent.y = y
+            return 0, x, y
 
 class ServingCounter(GameObject):
     def __init__(self, id, pos, size = 30, interact_range = 50):
@@ -154,6 +165,15 @@ class ServingCounter(GameObject):
                 return -5
         else:
             return 0
+        
+    def collision(self, x, y, agent):
+        dist = self.dist(x,y)
+        if(dist < self.size):
+            return 0, agent.x, agent.y
+        else:
+            agent.x = x
+            agent.y = y
+            return 0, x, y
 
         
 class CuttingBoard(GameObject):
@@ -179,11 +199,9 @@ class Frame(GameObject):
     def collision(self, x, y, agent):
         if(x >= 0 and x < self.width and y >= 0 and y < self.height):
             # check object collision
-            agent.x = x
-            agent.y = y
-            return 0
+            return 0, x, y
         else:
-            return -10
+            return -10, agent.x, agent.y
     
     def dist(self, x, y):
         return min(x, y, self.width - x, self.height -y)
@@ -250,10 +268,17 @@ class Overcook(object):
         new_x, new_y = self.agent.move(action)
         
         for object in self.objectlist:
-            reward += object.collision(new_x, new_y, self.agent)
+            r, new_x, new_y = object.collision(new_x, new_y, self.agent)
+            reward += r
+        
+        self.agent.x = new_x
+        self.agent.y = new_y
 
         #update done
-        done = self.time+1 >= self.time_limit 
+        done = False
+        self.time = self.time + 1
+        if (self.time >= self.time_limit):
+            done = True
        
         #interact with closest object
         obj, _ = self.get_closest_object()
