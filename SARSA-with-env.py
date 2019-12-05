@@ -90,10 +90,10 @@ class SARSA(object):
     """
     def policy(self, state , is_test):
         if (random.random() < 1. - self.epsilon) or is_test:
-            action_int =  np.argmax(self.Q_func(state, np.arange(self.action_dim)))
-        else:
-            action_int =  np.random.choice(self.state_dim_discrete)
-        return action_int
+            if (random.random() < 0.95):
+                return np.argmax(self.Q_func(state, np.arange(self.action_dim)))
+
+        return np.random.choice(self.state_dim_discrete)
 
     """
     Update parameter according to gradient descend
@@ -173,7 +173,6 @@ class SARSA(object):
             if done:
                 break
             
-        
         return reward_sum
     
     """
@@ -212,7 +211,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 2000  # 1000
+    num_episodes = 10000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -230,28 +229,27 @@ if __name__ == '__main__':
     load model
     """
     
-    # model.load('weight.npy')
+    model.load('weight2.npy')
 
     """
     Train model
     """
 
-    for i in range(num_episodes):
-        model.reset_state()
-        reward = model.train(num_timesteps)
-        print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
+    # for i in range(num_episodes):
+    #     model.reset_state()
+    #     reward = model.train(num_timesteps)
+    #     print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
 
-        if ((i+1)%1 == 0):
-            model.rewards.append(reward)
+    #     if ((i+1)%1 == 0):
+    #         model.rewards.append(reward)
         
-        if ((i+1)%int(num_episodes/10)==0):
-            print()
+    #     if ((i+1)%int(num_episodes/10)==0):
+    #         print()
 
-    # model.reset_state()
-    print('Training Reward:{}'.format(reward))
+    # print('Training Reward:{}'.format(reward))
 
-    plt.plot(model.rewards)
-    plt.show()
+    # plt.plot(model.rewards)
+    # plt.show()
     
     
 
@@ -259,18 +257,18 @@ if __name__ == '__main__':
     """
     Test model
     """
-    # for i in range(num_test_episodes):
-    #     model.reset_state()
-    #     reward = model.test(num_timesteps, render =  False)
-    #     print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
-    #     if ((i+1)%int(num_test_episodes/10)==0):
-    #         print()
+    for i in range(num_test_episodes):
+        model.reset_state()
+        reward = model.test(num_timesteps, render =  False)
+        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
+        if ((i+1)%int(num_test_episodes/10)==0):
+            print()
 
-    # print('Training Reward:{}'.format(reward))
+    print('Training Reward:{}'.format(reward))
     
     
     
-    animate_game(env)
+    animate_game(env, save = True)
     
     # """
     # Save model for later use

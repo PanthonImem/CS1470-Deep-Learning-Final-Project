@@ -3,7 +3,7 @@ import gym
 import numpy as np
 import tensorflow as tf
 
-from env import stage_1
+from env import stage_1, animate_game
 
 class SARSADeepQ(tf.keras.Model):
 	def __init__(self, env):
@@ -35,7 +35,7 @@ class SARSADeepQ(tf.keras.Model):
 		# potentially use lifting dimension as another hyper parameter
 		self.w = tf.Variable(tf.random.truncated_normal([self.state_dim_discrete, int(self.fourier_dim ** self.state_dim_continuous) ,self.num_actions], mean = 0.0, stddev = 0.02))
 
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.05)
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 		print('initialized model')
 
@@ -168,7 +168,7 @@ def train(solver, epsilon=0.05):
 		solver.add_memory((state, next_state, action, rwd, finished))
 		solver.experience_replay()
 		state = next_state
-		print('reward: {}'.format(rwd), end = '\r')
+		# print('reward: {}'.format(rwd), end = '\r')
 	return total_rwd
 
 
@@ -179,13 +179,16 @@ def main():
 	state_size = 5
 	num_actions = 9
 	
-	solver = DeepQSolver(env, state_size, num_actions, 100, 5)
+	solver = DeepQSolver(env, state_size, num_actions, 30, 5)
 	epsilon = 1
 	for i in range(1000):
 		res = train(solver, epsilon)
-		print("Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
-		epsilon = max(epsilon * 0.95, 0.01)
-		
+		print("Episode :{:4d} Reward: {:6d}".format(i, res), end = '\r')
+		if (i%100 == 0):
+			print()
+		epsilon = max(epsilon * 0.95, 0.1)
+	
+	animate_game(env)
 
 if __name__ == '__main__':
 	main()
