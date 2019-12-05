@@ -18,17 +18,15 @@ class DeepQ(tf.keras.Model):
 		self.state_size = state_size
 		self.num_actions = num_actions
 		
-		self.hidden_size1 = 9
-		self.hidden_size2 = 9
-		self.hidden_size3 = 9
-		self.hidden_size4 = 9
+		self.hidden_size1 = 1000
+		self.hidden_size2 = 100
+		self.hidden_size3 = 16
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 		
 		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
 		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
 		self.dense3 = tf.keras.layers.Dense(self.hidden_size3, activation='relu')
-		self.dense4 = tf.keras.layers.Dense(self.hidden_size4, activation='relu')
-		self.dense5 = tf.keras.layers.Dense(self.num_actions)
+		self.dense4 = tf.keras.layers.Dense(self.num_actions)
 	
 	@tf.function
 	def call(self, states):
@@ -44,7 +42,6 @@ class DeepQ(tf.keras.Model):
 		out = self.dense2(out)
 		out = self.dense3(out)
 		out = self.dense4(out)
-		out = self.dense5(out)
 		return out
 
 
@@ -120,7 +117,7 @@ def train(env, solver, epsilon=0.05):
 		total step
 	"""
 	(pos, holding) = env.reset()
-	pos = [pos[0] / env.width, pos[1] / env.height]
+	pos = [pos[0] / env.height, pos[1] / env.width]
 	state = pos + holding
 	finished = False
 	total_rwd = 0
@@ -130,8 +127,12 @@ def train(env, solver, epsilon=0.05):
 		else:
 			action = solver.best_action(state)
 		(next_pos, next_holding), rwd, finished = env.step(action)
-		next_pos = [next_pos[0] / env.width, next_pos[1] / env.height]
+		next_pos = [next_pos[0] / env.height, next_pos[1] / env.width]
 		next_state = next_pos + next_holding
+		if rwd == 200 - 1:
+			print("Get food")
+		if rwd == 1000 - 1:
+			print("Serve")
 		total_rwd += rwd
 		solver.add_memory((state, next_state, action, rwd, finished))
 		solver.experience_replay()
@@ -146,7 +147,7 @@ def main():
 	state_size = 5
 	num_actions = 9
 	
-	solver = DeepQSolver(state_size, num_actions, 100, 10)
+	solver = DeepQSolver(state_size, num_actions, 500, 5)
 	epsilon = 1
 	for i in range(1000):
 		res = train(env, solver, epsilon)
