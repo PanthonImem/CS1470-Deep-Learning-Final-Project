@@ -1,9 +1,7 @@
-import tensorflow as tf
 import numpy as np
-# import gym
 from itertools import product
 import random
-from env import overcook_env, stage_1, animate_game
+from env import stage_1, animate_game
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
 
@@ -28,7 +26,7 @@ class SARSA(object):
         self.env = env
 
         self.action_dim = env.num_action
-        self.state_dim_continuous = 2
+        self.state_dim_continuous = env.state_dim
         self.state_dim_discrete = len(env.possible_holding)
 
         self.bound = np.vstack(([0,0], [env.height, env.width]))
@@ -214,7 +212,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 100  # 1000
+    num_episodes = 20000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -229,48 +227,55 @@ if __name__ == '__main__':
     model = SARSA(env)
 
     """
+    load model
+    """
+    
+    model.load('weight.npy')
+
+    """
     Train model
     """
-    
 
-    for i in range(num_episodes):
-        model.reset_state()
-        reward = model.train(num_timesteps)
-        print('train episode: {}/{} reward: {}'.format(i+1, num_episodes, reward), end = '\r')
+    # for i in range(num_episodes):
+    #     model.reset_state()
+    #     reward = model.train(num_timesteps)
+    #     print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
 
-        if ((i+1)%1 == 0):
-            model.rewards.append(reward)
+    #     if ((i+1)%1 == 0):
+    #         model.rewards.append(reward)
         
-        if ((i+1)%int(num_episodes/10)==0):
-            print()
+    #     if ((i+1)%int(num_episodes/10)==0):
+    #         print()
 
-    animate_game(env)
-    model.reset_state()
-    print('Training Reward:{}'.format(reward))
+    # model.reset_state()
+    # print('Training Reward:{}'.format(reward))
 
-    plt.plot(model.rewards)
-    plt.show()
+    # plt.plot(model.rewards)
+    # plt.show()
+    
     
 
-    
-    """
-    Save model for later use
-    """
-    model.save('weight.npy')
-    # model.load('weight.npy')
 
     """
     Test model
     """
     for i in range(num_test_episodes):
+        model.reset_state()
         reward = model.test(num_timesteps, render =  False)
         print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
         if ((i+1)%int(num_test_episodes/10)==0):
             print()
-        model.reset_state()
 
-
-
+    print('Training Reward:{}'.format(reward))
+    
+    
+    
+    animate_game(env)
+    
+    # """
+    # Save model for later use
+    # """
+    # model.save('weight.npy')
 
 
 
