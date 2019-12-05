@@ -2,7 +2,7 @@ import os
 import gym
 import numpy as np
 import tensorflow as tf
-from pylab import *
+import matplotlib.pyplot as plt
 
 from env import stage_1, stage_2
 
@@ -64,14 +64,12 @@ class ReinforceWithBaseline(tf.keras.Model):
 
 
 def visualize_data(total_rewards):
-	x_values = arange(0, len(total_rewards), 1)
+	x_values = range(0, len(total_rewards), 1)
 	y_values = total_rewards
-	plot(x_values, y_values)
-	xlabel('episodes')
-	ylabel('cumulative rewards')
-	title('Reward by Episode')
-	grid(True)
-	show()
+	plt.plot(x_values, y_values)
+	plt.xlabel('episodes')
+	plt.ylabel('rewards')
+	plt.show()
 
 
 def discount(rewards, discount_factor=.99):
