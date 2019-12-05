@@ -16,25 +16,36 @@ class ReinforceWithBaseline(tf.keras.Model):
 		self.num_actions = num_actions
 		
 		# Define actor network parameters, critic network parameters, and optimizer
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.003)
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 		# actor network
-		self.actor_hidden_size = 16
+		self.actor_hidden_size = 1000
+		self.actor_hidden_size2 = 100
+		self.actor_hidden_size3 = 16
 		self.actor_dense1 = tf.keras.layers.Dense(self.actor_hidden_size, activation='relu')
-		self.actor_dense2 = tf.keras.layers.Dense(self.num_actions, activation='softmax')
+		self.actor_dense2 = tf.keras.layers.Dense(self.actor_hidden_size2, activation='relu')
+		self.actor_dense3 = tf.keras.layers.Dense(self.actor_hidden_size3, activation='relu')
+		self.actor_dense4 = tf.keras.layers.Dense(self.num_actions, activation='softmax')
 		# critic network
-		self.critic_hidden_size = 9
-		self.critic_dense1 = tf.keras.layers.Dense(self.critic_hidden_size, activation='relu')
-		self.critic_dense2 = tf.keras.layers.Dense(1)
+		# self.critic_hidden_size = 16
+		# self.critic_dense1 = tf.keras.layers.Dense(self.critic_hidden_size, activation='relu')
+		self.critic_dense1 = tf.keras.layers.Dense(self.actor_hidden_size, activation='relu')
+		self.critic_dense2 = tf.keras.layers.Dense(self.actor_hidden_size2, activation='relu')
+		self.critic_dense3 = tf.keras.layers.Dense(self.actor_hidden_size3, activation='relu')
+		self.critic_dense4 = tf.keras.layers.Dense(1)
 	
-	@tf.function
+	# @tf.function
 	def call(self, states):
 		out = self.actor_dense1(states)
 		out = self.actor_dense2(out)
+		out = self.actor_dense3(out)
+		out = self.actor_dense4(out)
 		return out
 	
 	def value_function(self, states):
 		out = self.critic_dense1(states)
 		out = self.critic_dense2(out)
+		out = self.critic_dense3(out)
+		out = self.critic_dense4(out)
 		return out
 	
 	def loss(self, states, actions, discounted_rewards):
@@ -79,11 +90,12 @@ def discount(rewards, discount_factor=.99):
 	return list(reversed(rev_discounted_rewards))
 
 
-def generate_trajectory(env, model):
+def generate_trajectory(env, model, verbose):
 	states = []
 	actions = []
 	rewards = []
 	(pos, holding) = env.reset()
+	pos = [pos[0] / env.height, pos[1] / env.width]
 	state = pos + holding
 	done = False
 	
@@ -93,20 +105,28 @@ def generate_trajectory(env, model):
 		# 2) sample from this distribution to pick the next action
 		action = np.random.choice(model.num_actions, p=prbs.numpy()[0])
 		
+		if verbose:
+			print(pos, prbs, action)
+		
 		states.append(state)
 		actions.append(action)
 		(pos, holding), rwd, done = env.step(action)
+		if rwd == 200 - 1:
+			print("Get food")
+		if rwd == 1000 - 1:
+			print("Serve")
+		pos = [pos[0] / env.height, pos[1] / env.width]
 		state = pos + holding
 		rewards.append(rwd)
 	
 	return states, actions, rewards
 
 
-def train(env, model):
+def train(env, model, verbose):
 	# 1) Use generate trajectory to run an episode and get states, actions, and rewards.
 	with tf.GradientTape() as tape:
 		# print('Gen trajectory')
-		states, actions, rewards = generate_trajectory(env, model)
+		states, actions, rewards = generate_trajectory(env, model, verbose)
 		# print('Done gen trajectory')
 		# 2) Compute discounted rewards.
 		discounted_rewards = discount(rewards)
@@ -128,8 +148,8 @@ def main():
 	model = ReinforceWithBaseline(state_size, num_actions)
 	
 	total_rewards = []
-	for i in range(2000):
-		res = train(env, model)
+	for i in range(3000):
+		res = train(env, model, i % 1000 == 0)
 		print(f'Episode {i}: {res}')
 		total_rewards.append(res)
 	# print(f'Episode {i}: reward = {res}')

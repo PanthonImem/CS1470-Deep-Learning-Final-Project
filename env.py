@@ -135,7 +135,9 @@ class Dispenser(GameObject):
         if dist < self.int_range:
             if agent.holding == None:
                 agent.holding = self.food
-            return 20
+                return 200
+            else:
+                return 0
         else:
             return 0
         
@@ -144,8 +146,6 @@ class Dispenser(GameObject):
         if(dist < self.size):
             return 0, agent.x, agent.y
         else:
-            agent.x = x
-            agent.y = y
             return 0, x, y
 
 class ServingCounter(GameObject):
@@ -157,7 +157,7 @@ class ServingCounter(GameObject):
         if dist < self.int_range:
             if agent.holding == env.order:
                 agent.holding = None
-                return 100
+                return 1000
             elif (agent.holding is not None):
                 agent.holding = None
                 return -50
@@ -171,8 +171,6 @@ class ServingCounter(GameObject):
         if(dist < self.size):
             return 0, agent.x, agent.y
         else:
-            agent.x = x
-            agent.y = y
             return 0, x, y
 
         
@@ -185,7 +183,9 @@ class CuttingBoard(GameObject):
         if dist < self.int_range:
             if agent.holding == 'Raw Salmon':
                 agent.holding = 'Salmon Sashimi'
-            return 35
+                return 350
+            else:
+                return 0
         else:
             return 0
 
@@ -204,7 +204,7 @@ class Frame(GameObject):
             return -10, agent.x, agent.y
     
     def dist(self, x, y):
-        return min(x, y, self.width - x, self.height -y)
+        return float('inf')
 
 class Overcook(object):
     """
@@ -348,8 +348,8 @@ class stage_1(Overcook):
         return
     def gen_stage(self):
         objectls = []
-        objectls.append(Dispenser(0, (200,200), food = 'Raw Salmon'))
-        objectls.append(ServingCounter(1, (200,400)))
+        objectls.append(Dispenser(0, (200,200), food = 'Raw Salmon', size = 20))
+        objectls.append(ServingCounter(1, (200,400), size = 20))
         return objectls
 class stage_2(Overcook):
     def __init__(self):
