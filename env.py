@@ -393,7 +393,7 @@ def animate_game(env, save = False):
         return agent, agentWith, objs, T_text
 
     # animation function.  This is called sequentially
-    def animate(t):
+    def animate(t, save = False):
         
         if env.holdings[t] == None:
             agent.set_data(env.history[t][0], env.history[t][1])
@@ -422,8 +422,8 @@ def animate_game(env, save = False):
     # the video can be embedded in html5.  You may need to adjust this for
     # your system: for more information, see
     # http://matplotlib.sourceforge.net/api/animation_api.html
-    # if save:
-    #     anim.save('cooling T{:.3f} B{:.3f}.mp4'.format(T, b), fps=30, extra_args=['-vcodec', 'libx264'], dpi = 300)
+    if save:
+        anim.save('trajectory.mp4', fps=20, extra_args=['-vcodec', 'libx264'], dpi = 300)
 
     
     plt.show()
