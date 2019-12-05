@@ -33,7 +33,7 @@ class ReinforceWithBaseline(tf.keras.Model):
 		self.critic_dense3 = tf.keras.layers.Dense(self.actor_hidden_size3, activation='relu')
 		self.critic_dense4 = tf.keras.layers.Dense(1)
 	
-	# @tf.function
+	@tf.function
 	def call(self, states):
 		out = self.actor_dense1(states)
 		out = self.actor_dense2(out)
@@ -64,12 +64,6 @@ class ReinforceWithBaseline(tf.keras.Model):
 
 
 def visualize_data(total_rewards):
-	"""
-    Takes in array of rewards from each episode, visualizes reward over episodes.
-
-    :param rewards: List of rewards from all episodes
-    """
-	
 	x_values = arange(0, len(total_rewards), 1)
 	y_values = total_rewards
 	plot(x_values, y_values)
@@ -100,9 +94,7 @@ def generate_trajectory(env, model, verbose):
 	done = False
 	
 	while not done:
-		# 1) use model to generate probability distribution over next actions
 		prbs = model(np.asarray([state]))
-		# 2) sample from this distribution to pick the next action
 		action = np.random.choice(model.num_actions, p=prbs.numpy()[0])
 		
 		if verbose:
@@ -125,14 +117,9 @@ def generate_trajectory(env, model, verbose):
 
 
 def train(env, model, verbose):
-	# 1) Use generate trajectory to run an episode and get states, actions, and rewards.
 	with tf.GradientTape() as tape:
-		# print('Gen trajectory')
 		states, actions, rewards = generate_trajectory(env, model, verbose)
-		# print('Done gen trajectory')
-		# 2) Compute discounted rewards.
 		discounted_rewards = discount(rewards)
-		# 3) Compute the loss from the model and run backpropagation on the model
 		loss = model.loss(np.asarray(states), np.asarray(actions), np.asarray(discounted_rewards))
 	grads = tape.gradient(loss, model.trainable_variables)
 	model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
@@ -150,7 +137,7 @@ def main():
 	model = ReinforceWithBaseline(state_size, num_actions)
 	
 	total_rewards = []
-	for i in range(3000):
+	for i in range(2000):
 		res = train(env, model, i % 1000 == 0)
 		print(f'Episode {i}: {res}')
 		total_rewards.append(res)
