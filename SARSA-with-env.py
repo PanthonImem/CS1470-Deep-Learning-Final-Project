@@ -1,7 +1,7 @@
 import numpy as np
 from itertools import product
 import random
-from env import stage_1, animate_game
+from env import stage_1, animate_game, stage_2
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
 
@@ -212,14 +212,14 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 20000  # 1000
+    num_episodes = 2000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
     """
     Create environment
     """
-    env = stage_1()
+    env = stage_2()
     
     """
     Instantiate model
@@ -230,28 +230,28 @@ if __name__ == '__main__':
     load model
     """
     
-    model.load('weight.npy')
+    # model.load('weight.npy')
 
     """
     Train model
     """
 
-    # for i in range(num_episodes):
-    #     model.reset_state()
-    #     reward = model.train(num_timesteps)
-    #     print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
+    for i in range(num_episodes):
+        model.reset_state()
+        reward = model.train(num_timesteps)
+        print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
 
-    #     if ((i+1)%1 == 0):
-    #         model.rewards.append(reward)
+        if ((i+1)%1 == 0):
+            model.rewards.append(reward)
         
-    #     if ((i+1)%int(num_episodes/10)==0):
-    #         print()
+        if ((i+1)%int(num_episodes/10)==0):
+            print()
 
     # model.reset_state()
-    # print('Training Reward:{}'.format(reward))
+    print('Training Reward:{}'.format(reward))
 
-    # plt.plot(model.rewards)
-    # plt.show()
+    plt.plot(model.rewards)
+    plt.show()
     
     
 
@@ -259,14 +259,14 @@ if __name__ == '__main__':
     """
     Test model
     """
-    for i in range(num_test_episodes):
-        model.reset_state()
-        reward = model.test(num_timesteps, render =  False)
-        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
-        if ((i+1)%int(num_test_episodes/10)==0):
-            print()
+    # for i in range(num_test_episodes):
+    #     model.reset_state()
+    #     reward = model.test(num_timesteps, render =  False)
+    #     print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
+    #     if ((i+1)%int(num_test_episodes/10)==0):
+    #         print()
 
-    print('Training Reward:{}'.format(reward))
+    # print('Training Reward:{}'.format(reward))
     
     
     
@@ -275,7 +275,7 @@ if __name__ == '__main__':
     # """
     # Save model for later use
     # """
-    # model.save('weight.npy')
+    model.save('weight2.npy')
 
 
 

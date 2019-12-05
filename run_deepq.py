@@ -16,53 +16,35 @@ class SARSADeepQ(tf.keras.Model):
 		super(SARSADeepQ, self).__init__()
 		self.env = env
 
-		self.action_dim = env.num_action
+		self.num_actions = env.num_action
 		self.state_dim_continuous = env.state_dim
 		self.state_dim_discrete = len(env.possible_holding)
+		self.bound = tf.stack([[0,0], [env.height, env.width]])
+
 
 		self.fourier_dim = 4
 
 		# Hyperparameter and layer define here
 
-		self.basis = np.pi * np.indices([self.fourier_dim] * self.state_dim_continuous)
+		self.basis = tf.constant(np.pi * np.indices([self.fourier_dim] * self.state_dim_continuous), dtype = tf.float32)
 
-		self.b = tf.Variable(tf.random.truncate_normal([self.num_actions], mean = 0.0, stddev = 0.02))
+		self.b = tf.constant(tf.zeros([int(self.fourier_dim ** self.state_dim_continuous)]))
 
-		self.lifting_disc = tf.constant(np.identity(self.state_dim_discrete))
+		self.lifting_disc = tf.constant(np.identity(self.state_dim_discrete), dtype = tf.float32)
 
 		# potentially use lifting dimension as another hyper parameter
-		self.w = tf.Variable(tf.random.truncate_normal([self.lifting_disc, self.fourier_dim * self.fourier_dim ,self.num_actions], mean = 0.0, stddev = 0.02))
+		self.w = tf.Variable(tf.random.truncated_normal([self.state_dim_discrete, int(self.fourier_dim ** self.state_dim_continuous) ,self.num_actions], mean = 0.0, stddev = 0.02))
 
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.005)
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.05)
 
-		self.layers = []
+		print('initialized model')
 
-		# continuous_state -> basis, discrete_state -> lifting vector
-		# cont: [state_dim_cont] -> [fourier_dim, fourier_dim]
-		# disc: [state_dim_disc] -> [state_dim_disc]
-		self.layers.append(lambda inputs: (tf.tensordot(inputs[0], self.basis, 1), tf.matmul(inputs[1], self.lifting_disc)))
 
-		# Flatten basis into 1D
-		# cont: [fourier_dim, fourier_dim] -> [1, fourier_dim * fourier_dim]
-		self.layers.append(lambda inputs: (tf.reshape(inputs[0], [-1, self.fourier_dim * self.fourier_dim]), inputs[1]))
-		
-		# add bias 
-		# cont: [1, fourier_dim * fourier_dim] -> [1, fourier_dim * fourier_dim] 
-		self.layers.append(lambda inputs: (inputs[0] + self.b, inputs[1]))
-		
-		# activate basis with cos function and create dense matrix depend on discrete_state
-		# cont: [1, fourier_dim * fourier_dim] -> [1, fourier_dim * fourier_dim] 
-		# disc: [state_dim_disc] -> [fourier_dim * fourier_dim, num_action]
-		self.layers.append(lambda inputs: (tf.math.cos(inputs[0]), inputs[1]))
-		
-	
-		self.layers.append(lambda inputs: (inputs[0], inputs[1]))
-		
 		
 
 
 	@tf.function
-	def call(self, states):
+	def call(self, cont, disc):
 		""" Compute Q values for the states in the batch
 
 		Args:
@@ -71,14 +53,36 @@ class SARSADeepQ(tf.keras.Model):
 		Returns:
 			a 2d tensor of each state's Q values
 		"""
-		out = self.dense1(states)
-		out = self.dense2(out)
-		out = self.dense3(out)
-		return out
+		# continuous_state -> basis, discrete_state -> lifting vector
+		# cont: [state_dim_cont] -> [fourier_dim, fourier_dim]
+		# disc: [state_dim_disc] -> [state_dim_disc]
+		cont  = tf.cast(tf.clip_by_value((cont - self.bound[0,:])/((self.bound[1, :] - self.bound[0, :])), 0.0,1.0), dtype = tf.float32)
+		disc = tf.convert_to_tensor(disc, dtype = tf.float32)
+
+		basis_state = tf.tensordot(cont, self.basis, 1)
+		lifted =  tf.tensordot(disc, self.lifting_disc, 1)
+
+		# Flatten basis into 1D
+		# cont: [fourier_dim, fourier_dim] -> [1, fourier_dim * fourier_dim]
+		basis_state_reshape = tf.reshape(basis_state, [1, -1]) 
+		basis_state_reshape = basis_state_reshape + self. b
+		
+		# activate basis with cos function and 
+		# cont: [1, fourier_dim * fourier_dim] -> [1, fourier_dim * fourier_dim] 
+		activated = tf.math.cos(basis_state_reshape)
+		
+		# create dense matrix depend on discrete_state
+		# disc: [state_dim_disc] -> [fourier_dim * fourier_dim, num_action]
+		dense = tf.tensordot(lifted, self.w, 1)
+		
+		# use the dense layer to apply to get Q value 
+		# state -> [action_num]
+		
+		return tf.matmul(activated, dense)
 
 
 class DeepQSolver:
-	def __init__(self, state_size, num_actions, num_memory, num_replay, gamma=0.99):
+	def __init__(self, env, state_size, num_actions, num_memory, num_replay, gamma=0.99):
 		""" provides API for the DQN model
 
 		Args:
@@ -88,7 +92,8 @@ class DeepQSolver:
 			num_replay: int, number of times for each replay
 			gamma: float, discount
 		"""
-		self.model = DeepQ(state_size, num_actions)
+		self.env = env
+		self.model = SARSADeepQ(env)
 		self.num_memory = num_memory
 		self.memory = []
 		self.num_replay = num_replay
@@ -103,7 +108,8 @@ class DeepQSolver:
 		Returns:
 			the action in the state with the highest Q value
 		"""
-		Q_values = self.model(np.asarray([state]))
+		cont, disc = state
+		Q_values = self.model(cont, disc)
 		action = tf.argmax(Q_values, 1)[0].numpy()
 		return action
 
@@ -126,16 +132,18 @@ class DeepQSolver:
 		batch = random.sample(self.memory, self.num_replay)
 		for (state, next_state, action, rwd, finished) in batch:
 			with tf.GradientTape() as tape:
-				Q_values = self.model(np.asarray([state]))
+				cont, disc = state
+				Q_values = self.model(cont, disc)
 				targetQ = Q_values.numpy()
-				targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
+				next_cont, next_disc = next_state
+				targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(next_cont, next_disc)).numpy()
 				loss = tf.reduce_sum(tf.square(Q_values - targetQ))
 
 			grads = tape.gradient(loss, self.model.trainable_variables)
 			self.model.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
 
 
-def train(env, solver, epsilon=0.05):
+def train(solver, epsilon=0.05):
 	""" Train the model for one episode
 
 	Args:
@@ -147,8 +155,7 @@ def train(env, solver, epsilon=0.05):
 	Returns:
 		total step
 	"""
-	(pos, holding) = env.reset()
-	state = pos + holding
+	state = solver.env.reset()
 	finished = False
 	total_rwd = 0
 	while not finished:
@@ -156,12 +163,12 @@ def train(env, solver, epsilon=0.05):
 			action = np.random.randint(9)
 		else:
 			action = solver.best_action(state)
-		(next_pos, next_holding), rwd, finished = env.step(action)
-		next_state = next_pos + next_holding
+		next_state, rwd, finished = solver.env.step(action)
 		total_rwd += rwd
 		solver.add_memory((state, next_state, action, rwd, finished))
 		solver.experience_replay()
 		state = next_state
+		print('reward: {}'.format(rwd), end = '\r')
 	return total_rwd
 
 
@@ -172,10 +179,10 @@ def main():
 	state_size = 5
 	num_actions = 9
 	
-	solver = DeepQSolver(state_size, num_actions, 100, 5)
+	solver = DeepQSolver(env, state_size, num_actions, 100, 5)
 	epsilon = 1
 	for i in range(1000):
-		res = train(env, solver, epsilon)
+		res = train(solver, epsilon)
 		print("Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
 		epsilon = max(epsilon * 0.95, 0.01)
 		
