@@ -160,7 +160,7 @@ class ServingCounter(GameObject):
                 return 1000
             elif (agent.holding is not None):
                 agent.holding = None
-                return -50
+                return -200
             else :
                 return -5
         else:

@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 from pylab import *
 
-from env import stage_1
+from env import stage_1, stage_2
 
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -113,6 +113,8 @@ def generate_trajectory(env, model, verbose):
 		(pos, holding), rwd, done = env.step(action)
 		if rwd == 200 - 1:
 			print("Get food")
+		if rwd == 350 - 1:
+			print("Cut")
 		if rwd == 1000 - 1:
 			print("Serve")
 		pos = [pos[0] / env.height, pos[1] / env.width]
@@ -141,7 +143,7 @@ def main():
 	import time
 	st = time.time()
 	
-	env = stage_1()  # environment
+	env = stage_2()  # environment
 	state_size = 5
 	num_actions = 9
 	
