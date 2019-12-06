@@ -3,6 +3,8 @@ import numpy as np
 import unit_env_test as test
 import matplotlib.pyplot as plt
 from matplotlib import animation
+import matplotlib.image as mgimg
+from PIL import Image  
 
 class Agent(object):
     """
@@ -127,7 +129,7 @@ class GameObject(object):
 
 class Dispenser(GameObject):
     def __init__(self, id, pos, size = 30, interact_range = 50, food = 'Raw Salmon'):
-       super().__init__(id, pos, 'Dispenser', size)
+       super().__init__(id, pos, 'Food_Dispenser', size)
        self.food = food
     
     def interact(self, agent, env):
@@ -150,7 +152,7 @@ class Dispenser(GameObject):
 
 class ServingCounter(GameObject):
     def __init__(self, id, pos, size = 30, interact_range = 50):
-       super().__init__(id, pos, 'Serving Counter', size)
+       super().__init__(id, pos, 'Serving_Counter', size)
     
     def interact(self, agent, env):
         dist = self.dist(agent.x, agent.y)
@@ -176,7 +178,7 @@ class ServingCounter(GameObject):
         
 class CuttingBoard(GameObject):
     def __init__(self, id, pos, size = 30, interact_range = 50):
-       super().__init__(id, pos, 'Serving Counter', size)
+       super().__init__(id, pos, 'Cutting_Board', size)
     
     def interact(self, agent, env):
         dist = self.dist(agent.x, agent.y)
@@ -416,6 +418,51 @@ def animate_game(env, save = False):
     # call the animator.  blit=True means only re-draw the parts that have changed.
     anim = animation.FuncAnimation(fig, animate, init_func=init,
                                 frames=200, interval=50, blit=False)
+
+    # save the animation as an mp4.  This requires ffmpeg or mencoder to be
+    # installed.  The extra_args ensure that the x264 codec is used, so that
+    # the video can be embedded in html5.  You may need to adjust this for
+    # your system: for more information, see
+    # http://matplotlib.sourceforge.net/api/animation_api.html
+    if save:
+        anim.save('trajectory.mp4', fps=20, extra_args=['-vcodec', 'libx264'], dpi = 300)
+
+    
+    plt.show()
+
+def render(env, save = False):
+
+    fig = plt.figure()
+    ax = plt.axes(xlim=(0, env.width), ylim=(0, env.height))
+
+    objs = []
+    for object in env.objectlist:
+        if object.type != 'Frame':
+            img =  Image.open('./graphics/'+object.type+'.png')
+            img.thumbnail((50, 50), Image.ANTIALIAS) 
+            img = np.array(img)
+            imgObj = ax.imshow(img,extent=[object.x, object.x +img.shape[1], object.y, object.y+img.shape[0]], zorder=1)
+            objs.append(imgObj)
+    
+    agent_img = Image.open('./graphics/Agent.png')
+    agent_img.thumbnail((50, 50), Image.ANTIALIAS) 
+    agent_img = np.array(agent_img)
+    agent = ax.imshow(agent_img,extent=[env.history[0][0], env.history[0][0] +img.shape[1], env.history[0][1], env.history[0][1]+img.shape[0]], zorder=1)
+
+    T_text = ax.text(0.05, 1.01, ' ', transform=ax.transAxes, fontsize = 16, color = 'k')
+    
+    
+    # animation function.  This is called sequentially
+    def animate(t, save = False):
+        
+       
+        agent.set_extent([env.history[t][0], env.history[t][0] +img.shape[1], env.history[t][1], env.history[t][1]+img.shape[0]])
+        
+        T_text.set_text('t = {} reward = {}'.format(t, env.rewards[t]))
+        return agent,  objs, T_text
+
+    # call the animator.  blit=True means only re-draw the parts that have changed.
+    anim = animation.FuncAnimation(fig, animate,frames=200, interval=50, blit=False)
 
     # save the animation as an mp4.  This requires ffmpeg or mencoder to be
     # installed.  The extra_args ensure that the x264 codec is used, so that
