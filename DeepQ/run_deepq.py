@@ -85,7 +85,7 @@ class DeepQSolver:
 		if len(self.memory) > self.num_memory:
 			self.memory = self.memory[1:]
 	
-	def experience_replay(self):
+	def experience_replay(self, verbose):
 		"""
 		replays previous episodes
 		"""
@@ -97,14 +97,17 @@ class DeepQSolver:
 				Q_values = self.model(np.asarray([state]))
 				targetQ = Q_values.numpy()
 				targetQ[0][action] = rwd + self.gamma * tf.reduce_max(self.model(np.asarray([next_state]))).numpy()
-				targetQ[0][action] = tf.clip_by_value(targetQ[0][action], clip_value_min=-1000, clip_value_max=100000)
+				targetQ[0][action] = tf.clip_by_value(targetQ[0][action], clip_value_min=-10000, clip_value_max=20000)
 				loss = tf.reduce_sum(tf.square(Q_values - targetQ))
-			# print(state[0] * 400.0, state[0] * 500.0, action, Q_values)
+			if verbose:
+				print(state[0] * 400.0, state[1] * 500.0, Q_values, action)
 			grads = tape.gradient(loss, self.model.trainable_variables)
 			self.model.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
+			if verbose:
+				print(state[0] * 400.0, state[1] * 500.0, self.model(np.asarray([state])))
 
 
-def train(env, solver, epsilon=0.05):
+def train(env, solver, verbose, epsilon=0.05):
 	""" Train the model for one episode
 
 	Args:
@@ -121,6 +124,8 @@ def train(env, solver, epsilon=0.05):
 	state = pos + holding
 	finished = False
 	total_rwd = 0
+	if verbose:
+		print(state[0] * 400.0, state[1] * 500.0, solver.model(np.asarray([state])))
 	while not finished:
 		if np.random.rand(1) < epsilon:
 			action = np.random.randint(9)
@@ -135,7 +140,7 @@ def train(env, solver, epsilon=0.05):
 			print("Serve")
 		total_rwd += rwd
 		solver.add_memory((state, next_state, action, rwd, finished))
-		solver.experience_replay()
+		solver.experience_replay(False)
 		state = next_state
 	return total_rwd
 
@@ -147,12 +152,12 @@ def main():
 	state_size = 5
 	num_actions = 9
 	
-	solver = DeepQSolver(state_size, num_actions, 500, 5)
+	solver = DeepQSolver(state_size, num_actions, 1000, 20)
 	epsilon = 1
-	for i in range(1000):
-		res = train(env, solver, epsilon)
+	for i in range(2000):
+		res = train(env, solver, False, epsilon=epsilon)
 		print("Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
-		epsilon = max(epsilon * 0.95, 0.05)
+		epsilon = max(epsilon * 0.99, 0.05)
 
 
 if __name__ == '__main__':
