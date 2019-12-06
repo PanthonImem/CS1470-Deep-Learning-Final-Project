@@ -160,7 +160,7 @@ class ServingCounter(GameObject):
                 return 1000
             elif (agent.holding is not None):
                 agent.holding = None
-                return -50
+                return -200
             else :
                 return -5
         else:
@@ -355,7 +355,7 @@ class stage_2(Overcook):
     def __init__(self):
         self.objectls = self.gen_stage()
         self.agent = Agent(0, (200, 300))
-        super().__init__(400, 500, 210, self.agent, self.objectls, 'Raw Salmon')
+        super().__init__(400, 500, 210, self.agent, self.objectls, 'Salmon Sashimi')
         return
     def gen_stage(self):
         objectls = []
@@ -393,7 +393,7 @@ def animate_game(env, save = False):
         return agent, agentWith, objs, T_text
 
     # animation function.  This is called sequentially
-    def animate(t):
+    def animate(t, save = False):
         
         if env.holdings[t] == None:
             agent.set_data(env.history[t][0], env.history[t][1])
@@ -422,8 +422,8 @@ def animate_game(env, save = False):
     # the video can be embedded in html5.  You may need to adjust this for
     # your system: for more information, see
     # http://matplotlib.sourceforge.net/api/animation_api.html
-    # if save:
-    #     anim.save('cooling T{:.3f} B{:.3f}.mp4'.format(T, b), fps=30, extra_args=['-vcodec', 'libx264'], dpi = 300)
+    if save:
+        anim.save('trajectory.mp4', fps=20, extra_args=['-vcodec', 'libx264'], dpi = 300)
 
     
     plt.show()

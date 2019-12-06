@@ -1,7 +1,7 @@
 import numpy as np
 from itertools import product
 import random
-from env import stage_1, animate_game
+from env import stage_1, animate_game, stage_2
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
 
@@ -90,10 +90,10 @@ class SARSA(object):
     """
     def policy(self, state , is_test):
         if (random.random() < 1. - self.epsilon) or is_test:
-            action_int =  np.argmax(self.Q_func(state, np.arange(self.action_dim)))
-        else:
-            action_int =  np.random.choice(self.state_dim_discrete)
-        return action_int
+            if (random.random() < 0.95):
+                return np.argmax(self.Q_func(state, np.arange(self.action_dim)))
+
+        return np.random.choice(self.state_dim_discrete)
 
     """
     Update parameter according to gradient descend
@@ -173,7 +173,6 @@ class SARSA(object):
             if done:
                 break
             
-        
         return reward_sum
     
     """
@@ -212,14 +211,14 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 20000  # 1000
+    num_episodes = 10000  # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
     """
     Create environment
     """
-    env = stage_1()
+    env = stage_2()
     
     """
     Instantiate model
@@ -230,7 +229,7 @@ if __name__ == '__main__':
     load model
     """
     
-    model.load('weight.npy')
+    model.load('weight2.npy')
 
     """
     Train model
@@ -247,7 +246,6 @@ if __name__ == '__main__':
     #     if ((i+1)%int(num_episodes/10)==0):
     #         print()
 
-    # model.reset_state()
     # print('Training Reward:{}'.format(reward))
 
     # plt.plot(model.rewards)
@@ -270,12 +268,12 @@ if __name__ == '__main__':
     
     
     
-    animate_game(env)
+    animate_game(env, save = True)
     
     # """
     # Save model for later use
     # """
-    # model.save('weight.npy')
+    model.save('weight2.npy')
 
 
 
