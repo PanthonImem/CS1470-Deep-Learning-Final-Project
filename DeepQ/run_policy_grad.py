@@ -89,29 +89,11 @@ class Reinforce(tf.keras.Model):
 		return out
 	
 	def loss(self, states, actions, discounted_rewards):
-		"""
-		Computes the loss for the agent. Make sure to understand the handout clearly when implementing this.
-
-		:param states: A batch of states of shape [episode_length, state_size]
-		:param actions: History of actions taken at each timestep of the episode (represented as an [episode_length] array)
-		:param discounted_rewards: Discounted rewards throughout a complete episode (represented as an [episode_length] array)
-		:return: loss, a TensorFlow scalar
-		"""
-		# Use gather_nd to get the probability of each action that was actually taken in the episode.
 		prbs = self.call(states)
 		indices = tf.stack([tf.range(actions.shape[0]), actions], axis=1)
 		prbs_act = tf.gather_nd(prbs, indices)
 		neg_log_prbs_act = -tf.math.log(prbs_act)
 		return tf.reduce_sum(neg_log_prbs_act * discounted_rewards)
-
-
-def visualize_data(total_rewards):
-	x_values = range(0, len(total_rewards), 1)
-	y_values = total_rewards
-	plt.plot(x_values, y_values)
-	plt.xlabel('episodes')
-	plt.ylabel('rewards')
-	plt.show()
 
 
 def discount(rewards, discount_factor=.99):
@@ -124,7 +106,7 @@ def discount(rewards, discount_factor=.99):
 	return list(reversed(rev_discounted_rewards))
 
 
-def generate_trajectory(env, model, verbose):
+def generate_trajectory(env, model):
 	states = []
 	actions = []
 	rewards = []
@@ -136,9 +118,6 @@ def generate_trajectory(env, model, verbose):
 	while not done:
 		prbs = model(np.asarray([state]))
 		action = np.random.choice(model.num_actions, p=prbs.numpy()[0])
-		
-		if verbose:
-			print(pos, prbs, action)
 		
 		states.append(state)
 		actions.append(action)
@@ -156,13 +135,18 @@ def generate_trajectory(env, model, verbose):
 	return states, actions, rewards
 
 
-def train(env, model, verbose):
+def train(env, model):
 	with tf.GradientTape() as tape:
-		states, actions, rewards = generate_trajectory(env, model, verbose)
+		states, actions, rewards = generate_trajectory(env, model)
 		discounted_rewards = discount(rewards)
 		loss = model.loss(np.asarray(states), np.asarray(actions), np.asarray(discounted_rewards))
 	grads = tape.gradient(loss, model.trainable_variables)
 	model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
+	return np.sum(rewards)
+
+
+def test(env, model):
+	states, actions, rewards = generate_trajectory(env, model)
 	return np.sum(rewards)
 
 
@@ -176,18 +160,18 @@ def main():
 	
 	model = Reinforce(state_size, num_actions)
 	
-	total_rewards = []
 	for i in range(2000):
-		res = train(env, model, i % 1000 == 0)
-		print(f'Episode {i}: {res}')
-		total_rewards.append(res)
-	# print(f'Episode {i}: reward = {res}')
-	print(f'The average of the last 50 rewards = {np.mean(total_rewards[-50:])}')
-	print(f'Time = {(time.time() - st) / 60.0}')
+		res = train(env, model)
+		print(f'Train: Episode {i} time {(time.time() - st) / 60}: {res}')
 	
-	# Visualize your rewards.
-	visualize_data(total_rewards)
-
+	st = time.time()
+	test_rewards = []
+	for i in range(100):
+		res = test(env, model)
+		print(f'Test: Episode {i} time {(time.time() - st) / 60}: {res}')
+		test_rewards.append(res)
+	print(f'Test: average {np.mean(test_rewards)}')
+	
 
 if __name__ == '__main__':
 	main()

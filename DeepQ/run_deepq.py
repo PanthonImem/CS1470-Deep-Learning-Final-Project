@@ -3,7 +3,7 @@ import gym
 import numpy as np
 import tensorflow as tf
 
-from env import stage_1
+from env import stage_1, stage_2
 
 
 class DeepQ(tf.keras.Model):
@@ -18,9 +18,9 @@ class DeepQ(tf.keras.Model):
 		self.state_size = state_size
 		self.num_actions = num_actions
 		
-		self.hidden_size1 = 1000
-		self.hidden_size2 = 100
-		self.hidden_size3 = 16
+		self.hidden_size1 = 2000
+		self.hidden_size2 = 200
+		self.hidden_size3 = 32
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
 		
 		self.dense1 = tf.keras.layers.Dense(self.hidden_size1, activation='relu')
@@ -134,6 +134,8 @@ def train(env, solver, epsilon=0.05):
 		next_state = next_pos + next_holding
 		if rwd == 200 - 1:
 			print("Get food")
+		if rwd == 350 - 1:
+			print("Cut")
 		if rwd == 1000 - 1:
 			print("Serve")
 		total_rwd += rwd
@@ -146,16 +148,24 @@ def train(env, solver, epsilon=0.05):
 def main():
 	import time
 	st = time.time()
-	env = stage_1()
+	env = stage_2()
 	state_size = 5
 	num_actions = 9
 	
 	solver = DeepQSolver(state_size, num_actions, 2000, 100)
 	epsilon = 1
-	for i in range(1000):
+	for i in range(500):
 		res = train(env, solver, epsilon)
-		print("Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
+		print("Train: Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
 		epsilon = max(epsilon * 0.99, 0.05)
+	
+	st = time.time()
+	test_rewards = []
+	for i in range(100):
+		res = train(env, solver, 0)
+		print("Test: Episode", i, "time", (time.time() - st) / 60, ": Reward =", res)
+		test_rewards.append(res)
+	print(f'Test: average {np.mean(test_rewards)}')
 
 
 if __name__ == '__main__':
