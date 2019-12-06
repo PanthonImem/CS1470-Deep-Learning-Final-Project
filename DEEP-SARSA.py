@@ -3,7 +3,7 @@ import gym
 import numpy as np
 import tensorflow as tf
 
-from env import stage_1, animate_game
+from env import stage_1, stage_2, animate_game, render
 
 class SARSADeepQ(tf.keras.Model):
 	def __init__(self, env):
@@ -26,16 +26,16 @@ class SARSADeepQ(tf.keras.Model):
 
 		# Hyperparameter and layer define here
 
-		self.basis = tf.constant(np.pi * np.indices([self.fourier_dim] * self.state_dim_continuous), dtype = tf.float32)
+		self.basis = tf.Variable(np.pi * np.indices([self.fourier_dim] * self.state_dim_continuous), dtype = tf.float32)
 
 		self.b = tf.constant(tf.zeros([int(self.fourier_dim ** self.state_dim_continuous)]))
 
-		self.lifting_disc = tf.constant(np.identity(self.state_dim_discrete), dtype = tf.float32)
+		self.lifting_disc = tf.Variable(np.identity(self.state_dim_discrete), dtype = tf.float32)
 
 		# potentially use lifting dimension as another hyper parameter
 		self.w = tf.Variable(tf.random.truncated_normal([self.state_dim_discrete, int(self.fourier_dim ** self.state_dim_continuous) ,self.num_actions], mean = 0.0, stddev = 0.02))
 
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.5e-3)
 
 		print('initialized model')
 
@@ -57,15 +57,15 @@ class SARSADeepQ(tf.keras.Model):
 		# cont: [state_dim_cont] -> [fourier_dim, fourier_dim]
 		# disc: [state_dim_disc] -> [state_dim_disc]
 		cont  = tf.cast(tf.clip_by_value((cont - self.bound[0,:])/((self.bound[1, :] - self.bound[0, :])), 0.0,1.0), dtype = tf.float32)
-		disc = tf.convert_to_tensor(disc, dtype = tf.float32)
+		# disc = tf.convert_to_tensor(disc, dtype = tf.float32)
+		idx = np.where(np.array(disc) == 1)[0][0]
 
 		basis_state = tf.tensordot(cont, self.basis, 1)
-		lifted =  tf.tensordot(disc, self.lifting_disc, 1)
+		lifted =  tf.gather(self.lifting_disc, idx)
 
 		# Flatten basis into 1D
 		# cont: [fourier_dim, fourier_dim] -> [1, fourier_dim * fourier_dim]
-		basis_state_reshape = tf.reshape(basis_state, [1, -1]) 
-		basis_state_reshape = basis_state_reshape + self. b
+		basis_state_reshape = tf.reshape(basis_state, [1, -1]) + self. b
 		
 		# activate basis with cos function and 
 		# cont: [1, fourier_dim * fourier_dim] -> [1, fourier_dim * fourier_dim] 
@@ -79,6 +79,19 @@ class SARSADeepQ(tf.keras.Model):
 		# state -> [action_num]
 		
 		return tf.matmul(activated, dense)
+	
+	def save(self):
+		print('saving model...')
+		np.save('./DeepS-checkpoint/w.npy', self.w.numpy())
+		np.save('./DeepS-checkpoint/lifting_disc.npy', self.lifting_disc.numpy())
+		np.save('./DeepS-checkpoint/basis.npy', self.basis.numpy())
+	
+	def load(self):
+		print('loading model...')
+		self.w = tf.Variable(np.load('./DeepS-checkpoint/w.npy'))
+		self.lifting_disc = tf.Variable(np.load('./DeepS-checkpoint/lifting_disc.npy'))
+		self.basis = tf.Variable(np.load('./DeepS-checkpoint/basis.npy'))
+
 
 
 class DeepQSolver:
@@ -171,24 +184,49 @@ def train(solver, epsilon=0.05):
 		# print('reward: {}'.format(rwd), end = '\r')
 	return total_rwd
 
+def test(solver, lf, load = True, epsilon = 0.01):
+	if load:
+		solver.model.load()
+	state = solver.env.reset()
+	finished = False
+	total_rwd = 0
+
+	while not finished:
+		if np.random.rand(1) < epsilon:
+			action = np.random.randint(9)
+		else:
+			action = solver.best_action(state)
+		next_state, rwd, finished = solver.env.step(action)
+		total_rwd += rwd
+		state = next_state
+		# print('reward: {}'.format(rwd), end = '\r')
+	return total_rwd
+	
+	
+
 
 def main():
-	import time
-	st = time.time()
 	env = stage_1()
 	state_size = 5
 	num_actions = 9
 	
-	solver = DeepQSolver(env, state_size, num_actions, 30, 5)
-	epsilon = 1
-	for i in range(1000):
-		res = train(solver, epsilon)
-		print("Episode :{:4d} Reward: {:6d}".format(i, res), end = '\r')
-		if (i%100 == 0):
-			print()
-		epsilon = max(epsilon * 0.95, 0.1)
+	solver = DeepQSolver(env, state_size, num_actions, 100, 5)
+
 	
-	animate_game(env)
+	# epsilon = 1.0
+	# # solver.model.load()
+	# for i in range(500):
+	# 	res = train(solver, epsilon)
+	# 	print("Episode :{:4d} Reward: {:6d}".format(i, res), end = '\r')
+	# 	if ((i+1)%100 == 0):
+	# 		print()
+	# 		solver.model.save()
+
+	# 	# epsilon = max(epsilon * 0.95, 0.05)
+	
+	test(solver, 0.05)
+	# animate_game(env)
+	render(env)
 
 if __name__ == '__main__':
 	main()
