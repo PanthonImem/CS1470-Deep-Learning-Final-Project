@@ -26,11 +26,12 @@ class ReinforceWithBaseline(tf.keras.Model):
 		self.actor_dense3 = tf.keras.layers.Dense(self.actor_hidden_size3, activation='relu')
 		self.actor_dense4 = tf.keras.layers.Dense(self.num_actions, activation='softmax')
 		# critic network
-		# self.critic_hidden_size = 16
-		# self.critic_dense1 = tf.keras.layers.Dense(self.critic_hidden_size, activation='relu')
-		self.critic_dense1 = tf.keras.layers.Dense(self.actor_hidden_size, activation='relu')
-		self.critic_dense2 = tf.keras.layers.Dense(self.actor_hidden_size2, activation='relu')
-		self.critic_dense3 = tf.keras.layers.Dense(self.actor_hidden_size3, activation='relu')
+		self.critic_hidden_size = 1000
+		self.critic_hidden_size2 = 100
+		self.critic_hidden_size3 = 16
+		self.critic_dense1 = tf.keras.layers.Dense(self.critic_hidden_size, activation='relu')
+		self.critic_dense2 = tf.keras.layers.Dense(self.critic_hidden_size2, activation='relu')
+		self.critic_dense3 = tf.keras.layers.Dense(self.critic_hidden_size3, activation='relu')
 		self.critic_dense4 = tf.keras.layers.Dense(1)
 	
 	@tf.function
@@ -61,6 +62,47 @@ class ReinforceWithBaseline(tf.keras.Model):
 		critic_loss = tf.reduce_sum((discounted_rewards - state_values) ** 2)
 		
 		return actor_loss + 0.5 * critic_loss
+
+
+class Reinforce(tf.keras.Model):
+	def __init__(self, state_size, num_actions):
+		super(Reinforce, self).__init__()
+		self.num_actions = num_actions
+		
+		# Define network parameters and optimizer
+		self.hidden_size = 1000
+		self.hidden_size2 = 100
+		self.hidden_size3 = 16
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.001)
+		
+		self.dense1 = tf.keras.layers.Dense(self.hidden_size, activation='relu')
+		self.dense2 = tf.keras.layers.Dense(self.hidden_size2, activation='relu')
+		self.dense3 = tf.keras.layers.Dense(self.hidden_size3, activation='relu')
+		self.dense4 = tf.keras.layers.Dense(self.num_actions, activation='softmax')
+	
+	@tf.function
+	def call(self, states):
+		out = self.dense1(states)
+		out = self.dense2(out)
+		out = self.dense3(out)
+		out = self.dense4(out)
+		return out
+	
+	def loss(self, states, actions, discounted_rewards):
+		"""
+		Computes the loss for the agent. Make sure to understand the handout clearly when implementing this.
+
+		:param states: A batch of states of shape [episode_length, state_size]
+		:param actions: History of actions taken at each timestep of the episode (represented as an [episode_length] array)
+		:param discounted_rewards: Discounted rewards throughout a complete episode (represented as an [episode_length] array)
+		:return: loss, a TensorFlow scalar
+		"""
+		# Use gather_nd to get the probability of each action that was actually taken in the episode.
+		prbs = self.call(states)
+		indices = tf.stack([tf.range(actions.shape[0]), actions], axis=1)
+		prbs_act = tf.gather_nd(prbs, indices)
+		neg_log_prbs_act = -tf.math.log(prbs_act)
+		return tf.reduce_sum(neg_log_prbs_act * discounted_rewards)
 
 
 def visualize_data(total_rewards):
@@ -132,7 +174,7 @@ def main():
 	state_size = 5
 	num_actions = 9
 	
-	model = ReinforceWithBaseline(state_size, num_actions)
+	model = Reinforce(state_size, num_actions)
 	
 	total_rewards = []
 	for i in range(2000):
