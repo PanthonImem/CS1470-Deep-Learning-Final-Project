@@ -113,9 +113,9 @@ def visualize_data(total_rewards, save):
 	plt.plot(x_values, y_values)
 	plt.xlabel('episodes')
 	plt.ylabel('rewards')
-	plt.show()
 	if save:
-		plt.savefig('test_policy_grad.png')
+		plt.savefig('test_deepq.png')
+	plt.show()
 
 
 def train(env, solver, epsilon=0.05):

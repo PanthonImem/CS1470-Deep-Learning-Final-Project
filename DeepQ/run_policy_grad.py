@@ -102,9 +102,9 @@ def visualize_data(total_rewards, save):
 	plt.plot(x_values, y_values)
 	plt.xlabel('episodes')
 	plt.ylabel('rewards')
-	plt.show()
 	if save:
 		plt.savefig('test_policy_grad.png')
+	plt.show()
 
 
 def discount(rewards, discount_factor=.99):
@@ -172,7 +172,7 @@ def main():
 	model = Reinforce(state_size, num_actions)
 	
 	train_rewards = []
-	for i in range(2000):
+	for i in range(3000):
 		res = train(env, model)
 		print(f'Train: Episode {i} time {(time.time() - st) / 60}: {res}')
 		train_rewards.append(res)
