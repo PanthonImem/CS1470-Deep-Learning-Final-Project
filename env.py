@@ -1,4 +1,5 @@
 import random
+import os
 import numpy as np
 import unit_env_test as test
 import matplotlib.pyplot as plt
@@ -471,10 +472,12 @@ def render(env, save = False):
     fig = plt.figure()
     ax = plt.axes(xlim=(0, env.width), ylim=(0, env.height))
 
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+
     objs = []
     for object in env.objectlist:
         if object.type != 'Frame' and object.type != 'Wall':
-            img =  Image.open('./graphics/'+object.type+'.png')
+            img = Image.open(os.path.join(dir_path, 'graphics', object.type+'.png'))
             img.thumbnail((50, 50), Image.ANTIALIAS) 
             img = np.array(img)
             imgObj = ax.imshow(img,extent=[object.x - 25, object.x +img.shape[1] - 25, object.y - 25, object.y+img.shape[0] - 25], zorder=1)
@@ -483,7 +486,7 @@ def render(env, save = False):
         if object.type == 'Wall':
             ax.plot([object.x1, object.x2], [object.y1, object.y2])
     
-    agent_img = Image.open('./graphics/Agent.png')
+    agent_img = Image.open(os.path.join(dir_path, 'graphics', 'Agent.png'))
     agent_img.thumbnail((50, 50), Image.ANTIALIAS) 
     agent_img = np.array(agent_img)
     agent = ax.imshow(agent_img,extent=[env.history[0][0], env.history[0][0] +img.shape[1], env.history[0][1], env.history[0][1]+img.shape[0]], zorder=1)
