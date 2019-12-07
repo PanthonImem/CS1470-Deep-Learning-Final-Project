@@ -210,11 +210,10 @@ class Frame(GameObject):
         return float('inf')
 
 class Wall(GameObject):
-    def __init__(self, id, x1, x2,type):
+    def __init__(self, id, x1, x2):
        super().__init__(id, (0,0), 'Wall', 0)
        self.y1, self.x1 = x1
        self.y2, self.x2 = x2
-       self.type = type
        self.normal = np.array((self.y2 - self.y1, self.x1 - self.x2))
     
     """
@@ -228,22 +227,29 @@ class Wall(GameObject):
             return 0,x,y
     """
     def collision(self, x, y, agent):
-        m1 = (self.y1-self.y2)/(self.x1-self.x2)
-        m2 = (y-agent.y)/(x-agent.x)
-        b1 = self.y2 - m1*self.x2
-        b2 = y - (m2*x)
+        # m1 = (self.y1-self.y2)/(self.x1-self.x2+1e-10)
+        # m2 = (y-agent.y)/(x-agent.x+1e-10)
+        # b1 = self.y2 - m1*self.x2
+        # b2 = y - (m2*x)
 
-        x_int  = (b2-b1)/(m2-m1)
-        y_int = m1 * x_int + b1
+        # x_int  = (b2-b1)/(m2-m1+1e-10)
+        # y_int = m1 * x_int + b1
 
         x_min = min(self.x1, self.x2)
         y_min = min(self.y1, self.y2)
         x_max = max(self.x1, self.x2)
         y_max = max(self.y1, self.y2)
-        if ((x_int > x_min and x_int < x_max) or (y_int > y_min and y_int < y_max):
-            return -10, agent.x, agent.y
-        else :
-            return 0,x,y
+
+        det = (x - agent.x)*(self.y2 - self.y1) - (y - agent.y)*(self.x2 - self.x1)
+        if det != 0:
+            t1 = ((agent.x - self.x1)*(self.y2 - self.y1) - (agent.y - self.y1)*(self.x2 - self.x1))/det
+            x_int = agent.x - t1 * (x - agent.x)
+            y_int = agent.y - t1 * (y - agent.y)
+            if ((x_int > x_min and x_int < x_max) or (y_int > y_min and y_int < y_max)):
+                return -10, agent.x, agent.y
+        
+        return 0,x,y
+        
 
         
     def dist(self, x, y):
