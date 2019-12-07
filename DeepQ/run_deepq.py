@@ -2,8 +2,9 @@ import random
 import gym
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
-from env import stage_1, stage_2
+from env import stage_1, stage_2, render
 
 
 class DeepQ(tf.keras.Model):
@@ -106,6 +107,17 @@ class DeepQSolver:
 		self.model.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
 
 
+def visualize_data(total_rewards, save):
+	x_values = range(0, len(total_rewards), 1)
+	y_values = total_rewards
+	plt.plot(x_values, y_values)
+	plt.xlabel('episodes')
+	plt.ylabel('rewards')
+	plt.show()
+	if save:
+		plt.savefig('test_policy_grad.png')
+
+
 def train(env, solver, epsilon=0.05):
 	""" Train the model for one episode
 
@@ -154,10 +166,13 @@ def main():
 	
 	solver = DeepQSolver(state_size, num_actions, 2000, 100)
 	epsilon = 1
+	train_rewards = []
 	for i in range(500):
 		res = train(env, solver, epsilon)
 		print("Train: Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
 		epsilon = max(epsilon * 0.99, 0.05)
+		train_rewards.append(res)
+	visualize_data(train_rewards, True)
 	
 	st = time.time()
 	test_rewards = []
@@ -166,6 +181,8 @@ def main():
 		print("Test: Episode", i, "time", (time.time() - st) / 60, ": Reward =", res)
 		test_rewards.append(res)
 	print(f'Test: average {np.mean(test_rewards)}')
+	
+	render(env, True)
 
 
 if __name__ == '__main__':

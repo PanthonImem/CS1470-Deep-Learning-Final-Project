@@ -4,7 +4,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-from env import stage_1, stage_2
+from env import stage_1, stage_2, render
 
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -94,6 +94,17 @@ class Reinforce(tf.keras.Model):
 		prbs_act = tf.gather_nd(prbs, indices)
 		neg_log_prbs_act = -tf.math.log(prbs_act)
 		return tf.reduce_sum(neg_log_prbs_act * discounted_rewards)
+	
+	
+def visualize_data(total_rewards, save):
+	x_values = range(0, len(total_rewards), 1)
+	y_values = total_rewards
+	plt.plot(x_values, y_values)
+	plt.xlabel('episodes')
+	plt.ylabel('rewards')
+	plt.show()
+	if save:
+		plt.savefig('test_policy_grad.png')
 
 
 def discount(rewards, discount_factor=.99):
@@ -160,9 +171,12 @@ def main():
 	
 	model = Reinforce(state_size, num_actions)
 	
+	train_rewards = []
 	for i in range(2000):
 		res = train(env, model)
 		print(f'Train: Episode {i} time {(time.time() - st) / 60}: {res}')
+		train_rewards.append(res)
+	visualize_data(train_rewards, True)
 	
 	st = time.time()
 	test_rewards = []
@@ -171,6 +185,8 @@ def main():
 		print(f'Test: Episode {i} time {(time.time() - st) / 60}: {res}')
 		test_rewards.append(res)
 	print(f'Test: average {np.mean(test_rewards)}')
+	
+	render(env, True)
 	
 
 if __name__ == '__main__':
