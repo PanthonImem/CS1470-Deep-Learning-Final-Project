@@ -3,7 +3,7 @@ import gym
 import numpy as np
 import tensorflow as tf
 
-from env import stage_1, stage_2, animate_game, render
+from env import stage_1, stage_2, stage_3, animate_game, render
 
 class SARSADeepQ(tf.keras.Model):
 	def __init__(self, env):
@@ -206,7 +206,7 @@ def test(solver, lf, load = True, epsilon = 0.01):
 
 
 def main():
-	env = stage_1()
+	env = stage_3()
 	state_size = 5
 	num_actions = 9
 	

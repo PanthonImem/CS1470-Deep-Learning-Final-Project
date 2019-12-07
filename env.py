@@ -211,8 +211,8 @@ class Frame(GameObject):
 class Wall(GameObject):
     def __init__(self, id, x1, x2):
        super().__init__(id, (0,0), 'Wall', 0)
-       self.x1, self.y1 = x1
-       self.x2, self.y2 = x2
+       self.y1, self.x1 = x1
+       self.y2, self.x2 = x2
        self.normal = np.array((self.y2 - self.y1, self.x1 - self.x2))
     
 
@@ -386,19 +386,21 @@ class stage_2(Overcook):
         objectls.append(CuttingBoard(1, (260,300)))
         objectls.append(ServingCounter(2, (200,400)))
         return objectls
-# class stage_3(Overcook):
-#     def __init__(self):
-#         self.objectls = self.gen_stage()
-#         self.agent = Agent(0, (200, 300))
-#         super().__init__(400, 500, 210, self.agent, self.objectls, 'Salmon Sashimi')
-#         return
-#     def gen_stage(self):
-#         objectls = []
-#         objectls.append(Dispenser(0, (50,150), food = 'Raw Salmon'))
-#         objectls.append(CuttingBoard(1, (50,50)))
-#         objectls.append(ServingCounter(2, (150,150)))
+class stage_3(Overcook):
+     def __init__(self):
+         self.objectls = self.gen_stage()
+         self.agent = Agent(0, (20, 20))
+         super().__init__(400, 400, 210, self.agent, self.objectls, 'Salmon Sashimi')
+         return
+     def gen_stage(self):
+         objectls = []
+         objectls.append(Dispenser(0, (250,150), food = 'Raw Salmon'))
+         objectls.append(CuttingBoard(1, (250,250)))
+         objectls.append(ServingCounter(2, (150,250)))
+         objectls.append(Wall(3, (50,200),(350,200)))
+         objectls.append(Wall(4, (200,50),(200,350)))
 
-#         return objectls
+         return objectls
     
 def animate_game(env, save = False):
 
@@ -471,12 +473,15 @@ def render(env, save = False):
 
     objs = []
     for object in env.objectlist:
-        if object.type != 'Frame':
+        if object.type != 'Frame' and object.type != 'Wall':
             img =  Image.open('./graphics/'+object.type+'.png')
             img.thumbnail((50, 50), Image.ANTIALIAS) 
             img = np.array(img)
-            imgObj = ax.imshow(img,extent=[object.x, object.x +img.shape[1], object.y, object.y+img.shape[0]], zorder=1)
+            imgObj = ax.imshow(img,extent=[object.x - 25, object.x +img.shape[1] - 25, object.y - 25, object.y+img.shape[0] - 25], zorder=1)
             objs.append(imgObj)
+
+        if object.type == 'Wall':
+            ax.plot([object.x1, object.x2], [object.y1, object.y2])
     
     agent_img = Image.open('./graphics/Agent.png')
     agent_img.thumbnail((50, 50), Image.ANTIALIAS) 
