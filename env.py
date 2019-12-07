@@ -427,7 +427,7 @@ class stage_2(Overcook):
 #          objectls.append(Wall(3, (50,200),(350,200)))
 #          objectls.append(Wall(4, (200,50),(200,350)))
 
-         return objectls
+        #  return objectls
 class stage_3(Overcook):
      def __init__(self):
          self.objectls = self.gen_stage()

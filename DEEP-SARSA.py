@@ -34,7 +34,7 @@ class SARSADeepQ(tf.keras.Model):
 		# potentially use lifting dimension as another hyper parameter
 		self.w = tf.Variable(tf.random.truncated_normal([self.state_dim_discrete, int(self.fourier_dim ** self.state_dim_continuous) ,self.num_actions], mean = 0.0, stddev = 0.02))
 
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate=0.5e-3)
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
 
 		print('initialized model')
 
