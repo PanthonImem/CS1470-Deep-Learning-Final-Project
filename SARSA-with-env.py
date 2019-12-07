@@ -1,7 +1,7 @@
 import numpy as np
 from itertools import product
 import random
-from env import stage_1, animate_game, stage_2, stage_3, render, stage_4
+from env import stage_1, animate_game, stage_2, stage_3, render, visualize
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
 
@@ -211,14 +211,14 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 10000  # 1000
+    num_episodes = 1000 # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
     """
     Create environment
     """
-    env = stage_4()
+    env = stage_1()
     
     """
     Instantiate model
@@ -248,7 +248,7 @@ if __name__ == '__main__':
 
     print('Training Reward:{}'.format(reward))
 
-    plt.plot(model.rewards)
+    visualize(model.rewards, 'SARSA-lambda', 'try.png')
     plt.show()
     
     

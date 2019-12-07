@@ -26,9 +26,9 @@ class SARSADeepQ(tf.keras.Model):
 
 		# Hyperparameter and layer define here
 
-		self.basis = tf.Variable(np.pi * np.indices([self.fourier_dim] * self.state_dim_continuous), dtype = tf.float32)
+		self.basis = tf.constant(np.pi * np.indices([self.fourier_dim] * self.state_dim_continuous), dtype = tf.float32)
 
-		self.lifting_disc = tf.Variable(np.identity(self.state_dim_discrete), dtype = tf.float32)
+		self.lifting_disc = tf.constant(np.identity(self.state_dim_discrete), dtype = tf.float32)
 
 		# potentially use lifting dimension as another hyper parameter
 		self.w = tf.Variable(tf.random.truncated_normal([self.state_dim_discrete, int(self.fourier_dim ** self.state_dim_continuous) ,self.num_actions], mean = 0.0, stddev = 0.02))
@@ -139,20 +139,31 @@ class DeepQSolver:
 		if len(self.memory) > self.num_memory:
 			self.memory = self.memory[1:]
 
-	def experience_replay(self):
+	def experience_replay(self, replay):
 		"""
 		replays previous episodes
 		"""
 		if len(self.memory) < self.num_replay:
 			return
-		batch = random.sample(self.memory, self.num_replay)
-		states, next_states, actions, rwds, finished = zip(*batch)
-		cont, disc = zip(*states)
-		cont = tf.stack(cont)
-		disc = tf.stack(disc)
-		next_cont, next_disc = zip(*next_states)
-		next_cont = tf.stack(next_cont)
-		next_disc = tf.stack(next_disc)
+
+		if replay:
+			batch = random.sample(self.memory, self.num_replay)
+			states, next_states, actions, rwds, finished = zip(*batch)
+			cont, disc = zip(*states)
+			cont = tf.stack(cont)
+			disc = tf.stack(disc)
+			next_cont, next_disc = zip(*next_states)
+			next_cont = tf.stack(next_cont)
+			next_disc = tf.stack(next_disc)
+		else:
+			states, next_states, action, rwds, finished = self.memory[-1]
+			cont, disc = states
+			next_cont, next_disc = next_states
+			cont = tf.reshape(cont, [1, -1])
+			disc = tf.reshape(disc, [1, -1])
+			next_cont = tf.reshape(next_cont, [1, -1])
+			next_disc = tf.reshape(next_disc, [1, -1])
+			actions = [action]
 		
 		with tf.GradientTape() as tape:
 			
@@ -166,7 +177,7 @@ class DeepQSolver:
 		self.model.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
 
 
-def train(solver, epsilon=0.05):
+def train(solver, epsilon=0.05, replay = True):
 	""" Train the model for one episode
 
 	Args:
@@ -189,7 +200,7 @@ def train(solver, epsilon=0.05):
 		next_state, rwd, finished = solver.env.step(action)
 		total_rwd += rwd
 		solver.add_memory((state, next_state, action, rwd, finished))
-		solver.experience_replay()
+		solver.experience_replay(replay)
 		state = next_state
 		# print('reward: {}'.format(rwd), end = '\r')
 	return total_rwd
@@ -225,17 +236,17 @@ def main():
 	
 	epsilon = 0.5
 	# solver.model.load()
-	# for i in range(500):
-	# 	res = train(solver, epsilon)
-	# 	print("Episode :{:4d} Reward: {:6d}".format(i, res), end = '\r')
-	# 	# render(env, None)
-	# 	if ((i+1)%100 == 0):
-	# 		print()
-	# 		solver.model.save()
+	for i in range(500):
+		res = train(solver, epsilon, replay = False)
+		print("Episode :{:4d} Reward: {:6d}".format(i, res), end = '\r')
+		# render(env, None)
+		if ((i+1)%100 == 0):
+			print()
+			solver.model.save()
 
-	# 	epsilon = max(epsilon * 0.99, 0.05)
+		epsilon = max(epsilon * 0.99, 0.05)
 	
-	test(solver, 0.1)
+	# test(solver, 0.1)
 	# animate_game(env)
 	render(env, 'deepfourier.mp4')
 

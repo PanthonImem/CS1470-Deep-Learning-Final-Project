@@ -558,6 +558,19 @@ def render(env, save_path = None):
 
     
     plt.show()
+def visualize(rewards, technique, save_path = None):
+    avg_rewards = np.convolve(rewards, np.ones(50)/50, 'valid')
+    plt.plot(rewards, 'blue', label = 'last episode')
+    plt.plot(avg_rewards, 'red', label = 'avg. last 50 episodes')
+    plt.title('Reward per episode: '+technique)
+    plt.xlabel('episode')
+    plt.ylabel('reward')
+    plt.legend()
+    if save_path is not None:
+        plt.savefig(save_path, dpi = 300)
+
+    plt.show()
+
 if __name__ == '__main__':
     tester = test.unit_env_test()
     tester.test_stage_1()
