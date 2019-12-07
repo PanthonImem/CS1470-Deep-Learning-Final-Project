@@ -236,7 +236,7 @@ def main():
 	
 	test(solver, 0.05)
 	# animate_game(env)
-	render(env, True)
+	render(env, 'deepfourier.mp4')
 
 if __name__ == '__main__':
 	main()
