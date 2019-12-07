@@ -226,7 +226,7 @@ def main():
 	
 	test(solver, 0.05)
 	# animate_game(env)
-	render(env)
+	render(env, True)
 
 if __name__ == '__main__':
 	main()

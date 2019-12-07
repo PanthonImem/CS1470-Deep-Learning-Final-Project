@@ -208,6 +208,27 @@ class Frame(GameObject):
     def dist(self, x, y):
         return float('inf')
 
+class Wall(GameObject):
+    def __init__(self, id, x1, x2):
+       super().__init__(id, (0,0), 'Wall', 0)
+       self.x1, self.y1 = x1
+       self.x2, self.y2 = x2
+       self.normal = np.array((self.y2 - self.y1, self.x1 - self.x2))
+    
+
+    def collision(self, x, y, agent):
+        rel1 = np.dot(np.array((x - self.x1, y - self.y1)), self.normal)
+        rel2 = np.dot(np.array((agent.x - self.x1, agent.y - self.y1)), self.normal)
+        if(rel1 * rel2 <= 0):
+            # check object collision
+            return -10, agent.x, agent.y
+        else:
+            return 0,x,y
+    
+    def dist(self, x, y):
+        return float('inf')
+
+
 class Overcook(object):
     """
     Class describe environment for overcook game
@@ -365,6 +386,19 @@ class stage_2(Overcook):
         objectls.append(CuttingBoard(1, (260,300)))
         objectls.append(ServingCounter(2, (200,400)))
         return objectls
+# class stage_3(Overcook):
+#     def __init__(self):
+#         self.objectls = self.gen_stage()
+#         self.agent = Agent(0, (200, 300))
+#         super().__init__(400, 500, 210, self.agent, self.objectls, 'Salmon Sashimi')
+#         return
+#     def gen_stage(self):
+#         objectls = []
+#         objectls.append(Dispenser(0, (50,150), food = 'Raw Salmon'))
+#         objectls.append(CuttingBoard(1, (50,50)))
+#         objectls.append(ServingCounter(2, (150,150)))
+
+#         return objectls
     
 def animate_game(env, save = False):
 
