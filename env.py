@@ -390,7 +390,7 @@ class stage_2(Overcook):
 class stage_3(Overcook):
      def __init__(self):
          self.objectls = self.gen_stage()
-         self.agent = Agent(0, (20, 20))
+         self.agent = Agent(0, (300, 100))
          super().__init__(400, 400, 210, self.agent, self.objectls, 'Salmon Sashimi')
          return
      def gen_stage(self):

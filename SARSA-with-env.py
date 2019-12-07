@@ -1,7 +1,7 @@
 import numpy as np
 from itertools import product
 import random
-from env import stage_1, animate_game, stage_2
+from env import stage_1, animate_game, stage_2, stage_3, render
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
 
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     """
     Create environment
     """
-    env = stage_2()
+    env = stage_3()
     
     """
     Instantiate model
@@ -229,27 +229,27 @@ if __name__ == '__main__':
     load model
     """
     
-    model.load('weight2.npy')
+    # model.load('weight2.npy')
 
     """
     Train model
     """
 
-    # for i in range(num_episodes):
-    #     model.reset_state()
-    #     reward = model.train(num_timesteps)
-    #     print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
+    for i in range(num_episodes):
+        model.reset_state()
+        reward = model.train(num_timesteps)
+        print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
 
-    #     if ((i+1)%1 == 0):
-    #         model.rewards.append(reward)
+        if ((i+1)%1 == 0):
+            model.rewards.append(reward)
         
-    #     if ((i+1)%int(num_episodes/10)==0):
-    #         print()
+        if ((i+1)%int(num_episodes/10)==0):
+            print()
 
-    # print('Training Reward:{}'.format(reward))
+    print('Training Reward:{}'.format(reward))
 
-    # plt.plot(model.rewards)
-    # plt.show()
+    plt.plot(model.rewards)
+    plt.show()
     
     
 
@@ -268,12 +268,13 @@ if __name__ == '__main__':
     
     
     
-    animate_game(env, save = True)
     
     # """
     # Save model for later use
     # """
-    model.save('weight2.npy')
+    model.save('weight3.npy')
+
+    render(env, save = True)
 
 
 
