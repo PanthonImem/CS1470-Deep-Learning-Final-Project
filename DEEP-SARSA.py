@@ -28,7 +28,6 @@ class SARSADeepQ(tf.keras.Model):
 
 		self.basis = tf.Variable(np.pi * np.indices([self.fourier_dim] * self.state_dim_continuous), dtype = tf.float32)
 
-
 		self.lifting_disc = tf.Variable(np.identity(self.state_dim_discrete), dtype = tf.float32)
 
 		# potentially use lifting dimension as another hyper parameter
@@ -125,8 +124,9 @@ class DeepQSolver:
 		cont, disc = state
 		cont = tf.reshape(cont, [1, -1])
 		disc = tf.reshape(disc, [1, -1])
-		Q_values = self.model(cont, disc)
-		action = tf.argmax(Q_values, 1)[0].numpy()
+		Q_values = self.model(cont, disc)[0]
+		action = tf.argmax(Q_values)
+
 		return action
 
 	def add_memory(self, tuple):
@@ -223,18 +223,19 @@ def main():
 	solver = DeepQSolver(env, state_size, num_actions, 2000, 100)
 
 	
-	epsilon = 1.0
+	epsilon = 0.5
 	# solver.model.load()
-	for i in range(500):
-		res = train(solver, epsilon)
-		print("Episode :{:4d} Reward: {:6d}".format(i, res), end = '\r')
-		if ((i+1)%100 == 0):
-			print()
-			solver.model.save()
+	# for i in range(500):
+	# 	res = train(solver, epsilon)
+	# 	print("Episode :{:4d} Reward: {:6d}".format(i, res), end = '\r')
+	# 	# render(env, None)
+	# 	if ((i+1)%100 == 0):
+	# 		print()
+	# 		solver.model.save()
 
-		epsilon = max(epsilon * 0.99, 0.05)
+	# 	epsilon = max(epsilon * 0.99, 0.05)
 	
-	test(solver, 0.05)
+	test(solver, 0.1)
 	# animate_game(env)
 	render(env, 'deepfourier.mp4')
 
