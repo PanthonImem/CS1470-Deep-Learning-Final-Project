@@ -5,7 +5,7 @@ import unit_env_test as test
 import matplotlib.pyplot as plt
 from matplotlib import animation
 import matplotlib.image as mgimg
-from PIL import Image  
+from PIL import Image
 
 class Agent(object):
     """
@@ -467,7 +467,7 @@ def animate_game(env, save = False):
     
     plt.show()
 
-def render(env, save = False):
+def render(env, save_path = None):
 
     fig = plt.figure()
     ax = plt.axes(xlim=(0, env.width), ylim=(0, env.height))
@@ -511,8 +511,8 @@ def render(env, save = False):
     # the video can be embedded in html5.  You may need to adjust this for
     # your system: for more information, see
     # http://matplotlib.sourceforge.net/api/animation_api.html
-    if save:
-        anim.save('trajectory.mp4', fps=20, extra_args=['-vcodec', 'libx264'], dpi = 300)
+    if save_path is not None:
+        anim.save(save_path, fps=20, extra_args=['-vcodec', 'libx264'], dpi = 300)
 
     
     plt.show()

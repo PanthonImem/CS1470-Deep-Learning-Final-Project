@@ -4,6 +4,7 @@
 
 .idea/
 *.png
+*.mp4
 
 ### venv ###
 # Virtualenv

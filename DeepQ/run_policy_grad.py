@@ -3,6 +3,7 @@ import gym
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+plt.rcParams['animation.ffmpeg_path'] = 'C:\\Program Files (x86)\\ffmpeg\\ffmpeg-20191206-b66a800-win64-static\\bin\\ffmpeg.exe'
 
 from env import stage_1, stage_2, render
 
@@ -186,8 +187,8 @@ def main():
 		test_rewards.append(res)
 	print(f'Test: average {np.mean(test_rewards)}')
 	
-	render(env, True)
-	
+	render(env, save_path='policy_grad.mp4')
+
 
 if __name__ == '__main__':
 	main()
