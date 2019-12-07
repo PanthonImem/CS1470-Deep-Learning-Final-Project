@@ -1,7 +1,7 @@
 import numpy as np
 from itertools import product
 import random
-from env import stage_1, animate_game, stage_2, stage_3, render
+from env import stage_1, animate_game, stage_2, stage_3, render, stage_4
 from Action import Action, get_action_dict
 import matplotlib.pyplot as plt
 
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     """
     Create environment
     """
-    env = stage_3()
+    env = stage_4()
     
     """
     Instantiate model
@@ -229,7 +229,7 @@ if __name__ == '__main__':
     load model
     """
     
-    # model.load('weight2.npy')
+    # model.load('weight4.npy')
 
     """
     Train model
@@ -272,10 +272,10 @@ if __name__ == '__main__':
     # """
     # Save model for later use
     # """
-    model.save('weight3.npy')
+    model.save('weight4.npy')
 
-    render(env, save = True)
-
+    render(env, 'stage3.mp4')
+    # animate_game(env)
 
 
 

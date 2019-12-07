@@ -413,19 +413,36 @@ class stage_2(Overcook):
         objectls.append(CuttingBoard(1, (260,300)))
         objectls.append(ServingCounter(2, (200,400)))
         return objectls
+# class stage_3(Overcook):
+#      def __init__(self):
+#          self.objectls = self.gen_stage()
+#          self.agent = Agent(0, (300, 100))
+#          super().__init__(400, 400, 210, self.agent, self.objectls, 'Salmon Sashimi')
+#          return
+#      def gen_stage(self):
+#          objectls = []
+#          objectls.append(Dispenser(0, (250,150), food = 'Raw Salmon'))
+#          objectls.append(CuttingBoard(1, (250,250)))
+#          objectls.append(ServingCounter(2, (150,250)))
+#          objectls.append(Wall(3, (50,200),(350,200)))
+#          objectls.append(Wall(4, (200,50),(200,350)))
+
+         return objectls
 class stage_3(Overcook):
      def __init__(self):
          self.objectls = self.gen_stage()
-         self.agent = Agent(0, (300, 100))
-         super().__init__(400, 400, 210, self.agent, self.objectls, 'Salmon Sashimi')
+         self.agent = Agent(0, (225, 75))
+         super().__init__(300, 300, 210, self.agent, self.objectls, 'Salmon Sashimi')
          return
      def gen_stage(self):
          objectls = []
-         objectls.append(Dispenser(0, (250,150), food = 'Raw Salmon'))
-         objectls.append(CuttingBoard(1, (250,250)))
-         objectls.append(ServingCounter(2, (150,250)))
-         objectls.append(Wall(3, (50,200),(350,200)))
-         objectls.append(Wall(4, (200,50),(200,350)))
+         objectls.append(Dispenser(0, (200, 100), food = 'Raw Salmon'))
+         objectls.append(CuttingBoard(1, (200,200)))
+         objectls.append(ServingCounter(2, (100,200)))
+         objectls.append(Wall(3, (25,150),(145,150)))
+         objectls.append(Wall(4, (150,25),(150,145)))
+         objectls.append(Wall(5, (155,150),(275,150)))
+         objectls.append(Wall(6, (150,155),(150,275)))
 
          return objectls
     
@@ -498,7 +515,7 @@ def render(env, save_path = None):
     fig = plt.figure()
     ax = plt.axes(xlim=(0, env.width), ylim=(0, env.height))
 
-    dir_path = os.path.dirname(os.path.realpath(__filey__))
+    dir_path = os.path.dirname(os.path.realpath(__file__))
 
     objs = []
     for object in env.objectlist:
@@ -515,7 +532,7 @@ def render(env, save_path = None):
     agent_img = Image.open(os.path.join(dir_path, 'graphics', 'Agent.png'))
     agent_img.thumbnail((50, 50), Image.ANTIALIAS) 
     agent_img = np.array(agent_img)
-    agent = ax.imshow(agent_img,extent=[env.history[0][0], env.history[0][0] +img.shape[1], env.history[0][1], env.history[0][1]+img.shape[0]], zorder=1)
+    agent = ax.imshow(agent_img,extent=[env.history[0][0]-25, env.history[0][0] +img.shape[1]-25, env.history[0][1]-25, env.history[0][1]+img.shape[0]-25], zorder=1)
 
     T_text = ax.text(0.05, 1.01, ' ', transform=ax.transAxes, fontsize = 16, color = 'k')
     
@@ -524,8 +541,7 @@ def render(env, save_path = None):
     def animate(t, save = False):
         
        
-        agent.set_extent([env.history[t][0], env.history[t][0] +img.shape[1], env.history[t][1], env.history[t][1]+img.shape[0]])
-        
+        agent.set_extent([env.history[t][0] - 25, env.history[t][0] +img.shape[1] - 25, env.history[t][1] - 25, env.history[t][1]+img.shape[0] - 25])
         T_text.set_text('t = {} reward = {}'.format(t, env.rewards[t]))
         return agent,  objs, T_text
 
