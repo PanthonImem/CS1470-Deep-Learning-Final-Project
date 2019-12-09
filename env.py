@@ -561,7 +561,7 @@ def render(env, save_path = None):
 def visualize(rewards, technique, save_path = None):
     avg_rewards = np.convolve(rewards, np.ones(50)/50, 'valid')
     plt.plot(rewards, 'blue', label = 'last episode')
-    plt.plot(avg_rewards, 'red', label = 'avg. last 50 episodes')
+    plt.plot(range(49, len(rewards)), avg_rewards, 'red', label = 'avg. last 50 episodes')
     plt.title('Reward per episode: '+technique)
     plt.xlabel('episode')
     plt.ylabel('reward')
