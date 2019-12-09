@@ -5,7 +5,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 plt.rcParams['animation.ffmpeg_path'] = 'C:\\Program Files (x86)\\ffmpeg\\ffmpeg-20191206-b66a800-win64-static\\bin\\ffmpeg.exe'
 
-from env import stage_1, stage_2, render
+from env import stage_1, stage_2, stage_3, render, visualize
 
 # Killing optional CPU driver warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -173,21 +173,21 @@ def main():
 	model = Reinforce(state_size, num_actions)
 	
 	train_rewards = []
-	for i in range(3000):
+	for i in range(2500):
 		res = train(env, model)
 		print(f'Train: Episode {i} time {(time.time() - st) / 60}: {res}')
 		train_rewards.append(res)
-	visualize_data(train_rewards, True)
+	visualize(train_rewards, 'Reinforce', 'Reinforce_stage2.png')
 	
-	st = time.time()
-	test_rewards = []
-	for i in range(100):
-		res = test(env, model)
-		print(f'Test: Episode {i} time {(time.time() - st) / 60}: {res}')
-		test_rewards.append(res)
-	print(f'Test: average {np.mean(test_rewards)}')
+	# st = time.time()
+	# test_rewards = []
+	# for i in range(100):
+	# 	res = test(env, model)
+	# 	print(f'Test: Episode {i} time {(time.time() - st) / 60}: {res}')
+	# 	test_rewards.append(res)
+	# print(f'Test: average {np.mean(test_rewards)}')
 	
-	render(env, save_path='policy_grad.mp4')
+	render(env, save_path='Reinforce_stage2.mp4')
 
 
 if __name__ == '__main__':

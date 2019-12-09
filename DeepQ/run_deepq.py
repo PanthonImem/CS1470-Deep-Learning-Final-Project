@@ -5,7 +5,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 plt.rcParams['animation.ffmpeg_path'] = 'C:\\Program Files (x86)\\ffmpeg\\ffmpeg-20191206-b66a800-win64-static\\bin\\ffmpeg.exe'
 
-from env import stage_1, stage_2, render
+from env import stage_1, stage_2, stage_3, render, visualize
 
 
 class DeepQ(tf.keras.Model):
@@ -108,17 +108,6 @@ class DeepQSolver:
 		self.model.optimizer.apply_gradients(zip(grads, self.model.trainable_variables))
 
 
-def visualize_data(total_rewards, save):
-	x_values = range(0, len(total_rewards), 1)
-	y_values = total_rewards
-	plt.plot(x_values, y_values)
-	plt.xlabel('episodes')
-	plt.ylabel('rewards')
-	if save:
-		plt.savefig('test_deepq.png')
-	plt.show()
-
-
 def train(env, solver, epsilon=0.05):
 	""" Train the model for one episode
 
@@ -173,17 +162,17 @@ def main():
 		print("Train: Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
 		epsilon = max(epsilon * 0.99, 0.05)
 		train_rewards.append(res)
-	visualize_data(train_rewards, True)
+	visualize(train_rewards, 'DeepQ', 'DeepQ_stage2.png')
 	
-	st = time.time()
-	test_rewards = []
-	for i in range(100):
-		res = train(env, solver, 0)
-		print("Test: Episode", i, "time", (time.time() - st) / 60, ": Reward =", res)
-		test_rewards.append(res)
-	print(f'Test: average {np.mean(test_rewards)}')
+	# st = time.time()
+	# test_rewards = []
+	# for i in range(100):
+	# 	res = train(env, solver, 0)
+	# 	print("Test: Episode", i, "time", (time.time() - st) / 60, ": Reward =", res)
+	# 	test_rewards.append(res)
+	# print(f'Test: average {np.mean(test_rewards)}')
 	
-	render(env, save_path='deepq.mp4')
+	render(env, save_path='DeepQ_stage2.mp4')
 
 
 if __name__ == '__main__':
