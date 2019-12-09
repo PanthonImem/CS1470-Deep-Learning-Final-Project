@@ -204,6 +204,34 @@ class SARSA(object):
     """
     def load(self, file):
         self.w = np.load(file)
+    
+
+def plotV(model, file):
+    model.load(file)
+    holding = np.eye(model.state_dim_discrete)
+    V = np.zeros([3, model.bound[1,0], model.bound[1,1]])
+    fig, axs = plt.subplots(nrows=1, ncols=3, sharex=True)
+    fig.subplots_adjust( right = 0.85, top = 0.9, bottom = 0.1,
+                    wspace=0.3, hspace=0.02)
+    for i in range(model.state_dim_discrete):
+        for x in range(model.bound[1,0]):
+            for y in range(model.bound[1,1]):
+                state = ([x, y], holding[i])
+                V[i, x , y ] = np.argmax(model.Q_func(state, np.arange(model.action_dim)))
+        s = axs[i].imshow(V[i], vmin = -2, vmax = 8, origin='lower')
+    axs[0].set_title('None')
+    axs[1].set_title('Raw Salmon')
+    axs[2].set_title('Salmon Sashimi')
+    cb_ax = fig.add_axes([0.9, 0.3, 0.02, 0.4])
+    fig.colorbar(s, cax=cb_ax)
+    fig.suptitle('V-value for stage_3 (SARSA-lambda)', fontsize=16, y = 0.92)
+    # cbar.set_ticks(np.arange(0, 1.1, 0.5))
+    # cbar.set_ticklabels(['low', 'medium', 'high'])
+    # plt.title('SARSA-lambda V value map')
+    plt.savefig('stage_3.png', dpi = 300)
+    plt.show()
+
+
 
 
 
@@ -218,7 +246,7 @@ if __name__ == '__main__':
     """
     Create environment
     """
-    env = stage_1()
+    env = stage_3()
     
     """
     Instantiate model
@@ -229,53 +257,55 @@ if __name__ == '__main__':
     load model
     """
     
-    # model.load('weight4.npy')
+    model.load('w3.npy')
 
     """
     Train model
     """
+    # model.epsilon = 0.1
+    # for i in range(num_episodes):
+    #     model.reset_state()
+    #     reward = model.train(num_timesteps)
+    #     print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
 
-    for i in range(num_episodes):
-        model.reset_state()
-        reward = model.train(num_timesteps)
-        print('train episode: {:5d}/{:5d} reward: {:8d}'.format(i+1, num_episodes, reward), end = '\r')
-
-        if ((i+1)%1 == 0):
-            model.rewards.append(reward)
+    #     if ((i+1)%1 == 0):
+    #         model.rewards.append(reward)
         
-        if ((i+1)%int(num_episodes/10)==0):
-            print()
+    #     if ((i+1)%int(num_episodes/10)==0):
+    #         print()
+    #     model.epsilon = max(model.epsilon * 0.999, 0.05)
 
-    print('Training Reward:{}'.format(reward))
+    # print('Training Reward:{}'.format(reward))
 
-    visualize(model.rewards, 'SARSA-lambda', 'try.png')
-    plt.show()
+    # visualize(model.rewards, 'SARSA-lambda', 'try.png')
+    # plt.show()
     
     
 
 
-    """
-    Test model
-    """
-    for i in range(num_test_episodes):
-        model.reset_state()
-        reward = model.test(num_timesteps, render =  False)
-        print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
-        if ((i+1)%int(num_test_episodes/10)==0):
-            print()
+    # """
+    # Test model
+    # """
+    # for i in range(num_test_episodes):
+    #     model.reset_state()
+    #     reward = model.test(num_timesteps, render =  False)
+    #     print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
+    #     if ((i+1)%int(num_test_episodes/10)==0):
+    #         print()
 
-    print('Training Reward:{}'.format(reward))
-    
+    # print('Training Reward:{}'.format(reward))
     
     
     
     # """
     # Save model for later use
     # """
-    model.save('weight4.npy')
+    # model.save('weight4.npy')
 
-    render(env, 'stage3.mp4')
+    # render(env, 'stage3.mp4')
     # animate_game(env)
+
+    plotV(model, 'w3.npy')
 
 
 
