@@ -293,6 +293,7 @@ class Overcook(object):
     def reset(self):
         self.time = 0
         self.cumulative_reward = 0
+        self.rewards = []
         self.agent.reset(self.og_pos)
         self.history = []
         self.holdings = []
