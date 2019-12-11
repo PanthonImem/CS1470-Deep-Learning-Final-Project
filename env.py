@@ -551,7 +551,7 @@ def render(env, save_path = None):
         return agent,  objs, T_text
 
     # call the animator.  blit=True means only re-draw the parts that have changed.
-    anim = animation.FuncAnimation(fig, animate,frames=200, interval=50, blit=False)
+    anim = animation.FuncAnimation(fig, animate,frames=210, interval=50, blit=False)
 
     # save the animation as an mp4.  This requires ffmpeg or mencoder to be
     # installed.  The extra_args ensure that the x264 codec is used, so that

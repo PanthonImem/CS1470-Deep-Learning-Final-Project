@@ -239,7 +239,7 @@ if __name__ == '__main__':
     """
     Define parameters
     """
-    num_episodes = 1000 # 1000
+    num_episodes = 50000 # 1000
     num_test_episodes = 100
     num_timesteps = 210  # 200
     
@@ -288,24 +288,25 @@ if __name__ == '__main__':
     # """
     # for i in range(num_test_episodes):
     #     model.reset_state()
-    #     reward = model.test(num_timesteps, render =  False)
+        # reward = model.test(num_timesteps, render =  False)
     #     print('test episode: {}/{} reward: {}'.format(i+1, num_test_episodes, reward), end = '\r')
     #     if ((i+1)%int(num_test_episodes/10)==0):
     #         print()
 
     # print('Training Reward:{}'.format(reward))
-    
-    
+    # print('[', end = '')
+    # rwd = model.test(num_timesteps, render =  False)
+    # print(']', end = '')
     
     # """
     # Save model for later use
     # """
     # model.save('weight4.npy')
-
-    # render(env, 'stage3.mp4')
+    model.test(num_timesteps, render =  False)
+    render(env, 'stage1.mp4')
     # animate_game(env)
 
-    plotV(model, 'w3.npy')
+    # plotV(model, 'w3.npy')
 
 
 

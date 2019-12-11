@@ -2,8 +2,10 @@ import random
 import gym
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
+# plt.rcParams['animation.ffmpeg_path'] = 'C:\\Program Files (x86)\\ffmpeg\\ffmpeg-20191206-b66a800-win64-static\\bin\\ffmpeg.exe'
 
-from env import stage_1, stage_2, stage_3
+from env import stage_1, stage_2, stage_3, render, visualize
 
 
 class DeepQ(tf.keras.Model):
@@ -148,24 +150,29 @@ def train(env, solver, epsilon=0.05):
 def main():
 	import time
 	st = time.time()
-	env = stage_3()
+	env = stage_1()
 	state_size = 5
 	num_actions = 9
 	
 	solver = DeepQSolver(state_size, num_actions, 2000, 100)
 	epsilon = 1
-	for i in range(500):
+	train_rewards = []
+	for i in range(750):
 		res = train(env, solver, epsilon)
 		print("Train: Episode", i, "epsilon", epsilon, "time", (time.time() - st) / 60, ": Reward =", res)
-		epsilon = max(epsilon * 0.99, 0.05)
+		epsilon = max(epsilon * 0.90, 0.05)
+		train_rewards.append(res)
+	visualize(train_rewards, 'DeepQ', 'DeepQ_stage1.png')
 	
-	st = time.time()
-	test_rewards = []
-	for i in range(100):
-		res = train(env, solver, 0)
-		print("Test: Episode", i, "time", (time.time() - st) / 60, ": Reward =", res)
-		test_rewards.append(res)
-	print(f'Test: average {np.mean(test_rewards)}')
+	# st = time.time()
+	# test_rewards = []
+	# for i in range(100):
+	# 	res = train(env, solver, 0)
+	# 	print("Test: Episode", i, "time", (time.time() - st) / 60, ": Reward =", res)
+	# 	test_rewards.append(res)
+	# print(f'Test: average {np.mean(test_rewards)}')
+	
+	render(env, save_path='DeepQ_stage1.mp4')
 
 
 if __name__ == '__main__':
