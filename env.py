@@ -536,7 +536,10 @@ def render(env, save_path = None):
     agent_img = np.array(agent_img)
     agent = ax.imshow(agent_img,extent=[env.history[0][0]-25, env.history[0][0] +img.shape[1]-25, env.history[0][1]-25, env.history[0][1]+img.shape[0]-25], zorder=1)
 
+
     T_text = ax.text(0.05, 1.01, ' ', transform=ax.transAxes, fontsize = 16, color = 'k')
+
+    plt.savefig('stage.png', dpi = 300)
     
     
     # animation function.  This is called sequentially
